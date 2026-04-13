@@ -1,7 +1,7 @@
 from flask import render_template
-import uuid
 
 from app.main import main_bp
+from app.models import db, Ong
 
 
 @main_bp.get("/")
@@ -16,6 +16,5 @@ def health_check():
 
 @main_bp.get("/ong/<uuid:ong_id>")
 def ong_profile(ong_id):
-    
-    
-    return render_template("ong_profile.html", ong={})
+    ong = db.get_or_404(Ong, ong_id)
+    return render_template("ong_profile.html", ong=ong)
