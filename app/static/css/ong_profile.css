@@ -1,0 +1,82 @@
+.ong-profile-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1rem 0;
+}
+
+.ong-header {
+  border-bottom: 2px solid #eaeaea;
+  padding-bottom: 1rem;
+}
+
+.ong-name {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ong-area {
+  color: #666;
+  font-weight: 500;
+}
+
+.ong-details {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.ong-main-info {
+  flex: 2;
+  min-width: 300px;
+}
+
+.ong-sidebar {
+  flex: 1;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.ong-main-info h3, .ong-sidebar h3 {
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 0.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.ong-main-info h3:first-child {
+  margin-top: 0;
+}
+
+.ong-description {
+  line-height: 1.6;
+}
+
+ul.ong-meta, ul.ong-contacts, .ong-sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+ul.ong-meta li, ul.ong-contacts li, .ong-sidebar ul li {
+  margin-bottom: 0.5rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.badge.active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.badge.inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+}
