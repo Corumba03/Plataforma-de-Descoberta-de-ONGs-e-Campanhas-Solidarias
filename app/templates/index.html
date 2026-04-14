@@ -4,15 +4,57 @@
 
 {% block content %}
 <section class="hero">
-  <h2>Projeto iniciado com Flask</h2>
-  <p>
-    Este e o ponto de partida da plataforma. O proximo passo e criar os modulos de ONGs,
-    campanhas, noticias e avaliacoes.
-  </p>
-  <ul>
-    <li>Rota inicial em <code>/</code></li>
-    <li>Health check em <code>/health</code></li>
-    <li>Estrutura preparada para crescer com blueprints</li>
-  </ul>
+  <div class="hero__copy">
+    <p class="section-label">Buscar ONGs e causas</p>
+    <h2>Encontre instituições alinhadas aos seus interesses</h2>
+    <p>
+      Digite o nome de uma ONG, uma causa social ou uma palavra-chave para ver resultados
+      relevantes em uma lista clicável.
+    </p>
+  </div>
+
+  <form class="search-form" method="get" action="{{ url_for('main.index') }}">
+    <label class="sr-only" for="search">Buscar ONG ou causa</label>
+    <input
+      id="search"
+      name="q"
+      type="search"
+      placeholder="Ex.: fome, reciclagem, inclusão"
+      value="{{ query }}"
+      autocomplete="off"
+    />
+    <button type="submit">Buscar</button>
+  </form>
+</section>
+
+<section class="results">
+  <div class="results__header">
+    <h3>Resultados</h3>
+    <p>
+      {% if query %}
+        {{ total_ongs }} ONG{% if total_ongs != 1 %}s{% endif %} encontrada{% if total_ongs != 1 %}s{% endif %} para "{{ query }}"
+      {% else %}
+        Mostrando ONGs em destaque para começar sua busca.
+      {% endif %}
+    </p>
+  </div>
+
+  {% if ongs %}
+    <div class="results-list">
+      {% for ong in ongs %}
+        <a class="result-card" href="{{ url_for('main.ong_detail', slug=ong.slug) }}">
+          <span class="result-card__cause">{{ ong.cause }}</span>
+          <h4>{{ ong.name }}</h4>
+          <p>{{ ong.description }}</p>
+          <span class="result-card__footer">Ver detalhes</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h4>Nenhuma ONG encontrada</h4>
+      <p>Tente buscar por outro termo, como uma causa, cidade ou palavra relacionada.</p>
+    </div>
+  {% endif %}
 </section>
 {% endblock %}

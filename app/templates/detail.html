@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ong.name }} | Plataforma Solidaria{% endblock %}
+
+{% block content %}
+<section class="detail-hero">
+  <div>
+    <p class="section-label">Perfil da ONG</p>
+    <h2>{{ ong.name }}</h2>
+    <p class="detail-hero__description">{{ ong.description }}</p>
+  </div>
+
+  <a class="back-link" href="{{ url_for('main.index') }}">Voltar para a busca</a>
+</section>
+
+<section class="detail-grid">
+  <article class="info-card">
+    <h3>Causa</h3>
+    <p>{{ ong.cause }}</p>
+  </article>
+  <article class="info-card">
+    <h3>Localização</h3>
+    <p>{{ ong.location }}</p>
+  </article>
+  <article class="info-card">
+    <h3>Impacto</h3>
+    <p>{{ ong.impact }}</p>
+  </article>
+</section>
+
+<section class="detail-content">
+  <h3>Sobre a iniciativa</h3>
+  <p>{{ ong.details }}</p>
+</section>
+{% endblock %}
