@@ -21,3 +21,6 @@ htmlcov/
 
 # VS Code settings (optional)
 .vscode/
+
+# Mise tool file
+mise.toml
