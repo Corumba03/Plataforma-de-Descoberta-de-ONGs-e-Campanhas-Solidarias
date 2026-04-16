@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar ONG | Plataforma Solidária{% endblock %}
+
+{% block content %}
+
+<form id="searchForm" class="search-container">
+    <input type="text" id="searchInput" name="q" class="search-input" placeholder="Buscar ONG pelo nome..." required />
+</form>
+
+<section id="results" class="results-container"></section>
+
+<style>
+    .search-container {
+        margin-bottom: 20px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+
+    .results-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .ong-card {
+        padding: 16px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .ong-card:hover {
+        background: #eaeaea;
+    }
+
+    .ong-title {
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .ong-area {
+        font-size: 14px;
+        color: #666;
+    }
+</style>
+
+<script>
+    const form = document.getElementById("searchForm");
+    const input = document.getElementById("searchInput");
+    const resultsDiv = document.getElementById("results");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault(); // 🔴 impede reload
+
+        const query = input.value.trim();
+        if (!query) return;
+
+        resultsDiv.innerHTML = "<p>Carregando...</p>";
+
+        try {
+            const response = await fetch(`/api/ongs?q=${encodeURIComponent(query)}`);
+            const ongs = await response.json();
+
+            renderResults(ongs);
+
+        } catch (err) {
+            console.error(err);
+            resultsDiv.innerHTML = "<p>Erro ao buscar ONGs.</p>";
+        }
+    });
+
+    function renderResults(ongs) {
+        if (!ongs.length) {
+            resultsDiv.innerHTML = "<p>Nenhuma ONG encontrada.</p>";
+            return;
+        }
+
+        resultsDiv.innerHTML = ongs.map(ong => `
+    <div class="ong-card" onclick="goToOng('${ong.id}')">
+      <div class="ong-title">${ong.nome}</div>
+      <div class="ong-area">
+        ${ong.area_atuacao || "Área não informada"}
+      </div>
+    </div>
+  `).join("");
+    }
+
+    // 🔹 função de redirecionamento
+    function goToOng(id) {
+        window.location.href = `/ong/${id}`;
+    }
+</script>
+
+{% endblock %}
