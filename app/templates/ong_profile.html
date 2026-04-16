@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ong_profile.css') }}" />
+{% endblock %}
+
+{% block title %}Perfil da ONG | Plataforma Solidária{% endblock %}
+
+{% block content %}
+<div class="ong-profile-container">
+  <header class="ong-header">
+    <div class="ong-header-content">
+      <h2 class="ong-name">{{ ong.nome }}</h2>
+      <p class="ong-area">Área de Atuação: {{ ong.area_atuacao.nome_area }}</p>
+    </div>
+  </header>
+
+  <section class="ong-details">
+    <div class="ong-main-info">
+      <h3>Sobre a ONG</h3>
+      <p class="ong-description">{{ ong.descricao }}</p>
+      
+      <h3>Detalhes</h3>
+      <ul class="ong-meta">
+        <li><strong>CNPJ:</strong> {{ ong.cnpj }}</li>
+      </ul>
+      
+      <h3>Contatos</h3>
+      <ul class="ong-contacts">
+        {% for contato in ong.contatos %}
+          <li><strong>{{ contato.tipo_contato }}:</strong> {{ contato.valor }}</li>
+        {% else %}
+          <li>Nenhum contato cadastrado.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <aside class="ong-sidebar">
+      <div class="ong-campaigns">
+        <h3>Campanhas</h3>
+        <ul>
+          {% for campanha in ong.campanhas %}
+            <li>
+              <strong>{{ campanha.titulo }}</strong> 
+              <span class="badge {{ 'active' if campanha.status == 'ativa' else 'inactive' }}">{{ campanha.status }}</span>
+            </li>
+          {% else %}
+            <li>Nenhuma campanha no momento.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="ong-news">
+        <h3>Últimas Notícias</h3>
+        <ul>
+          {% for noticia in ong.noticias %}
+            <li>
+              {% if noticia.link %}
+                <a href="{{ noticia.link }}" target="_blank" rel="noopener noreferrer">{{ noticia.titulo }}</a>
+              {% else %}
+                {{ noticia.titulo }}
+              {% endif %}
+              <small>({{ noticia.data_publicacao }})</small>
+            </li>
+          {% else %}
+            <li>Nenhuma notícia recente.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </aside>
+  </section>
+</div>
+{% endblock %}
