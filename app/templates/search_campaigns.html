@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar Campanhas | Plataforma Solidária{% endblock %}
+
+{% block content %}
+
+<form id="searchForm" class="search-container">
+    <input 
+        type="text" 
+        id="searchInput" 
+        name="q" 
+        class="search-input" 
+        placeholder="Buscar campanhas..." 
+        required 
+    />
+</form>
+
+<section id="results" class="results-container"></section>
+
+<style>
+    .search-container {
+        margin-bottom: 20px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+
+    .results-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .card {
+        padding: 16px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .card:hover {
+        background: #eaeaea;
+    }
+
+    .title {
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .subtitle {
+        font-size: 14px;
+        color: #666;
+    }
+
+    .extra {
+        margin-top: 6px;
+        font-size: 13px;
+        color: #444;
+    }
+</style>
+
+<script>
+    const form = document.getElementById("searchForm");
+    const input = document.getElementById("searchInput");
+    const resultsDiv = document.getElementById("results");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const query = input.value.trim();
+        if (!query) return;
+
+        resultsDiv.innerHTML = "<p>Carregando...</p>";
+
+        try {
+            const response = await fetch(`/api/campaigns?q=${encodeURIComponent(query)}`);
+            const campanhas = await response.json();
+
+            renderResults(campanhas);
+
+        } catch (err) {
+            console.error(err);
+            resultsDiv.innerHTML = "<p>Erro ao buscar campanhas.</p>";
+        }
+    });
+
+    function renderResults(campanhas) {
+        if (!campanhas.length) {
+            resultsDiv.innerHTML = "<p>Nenhuma campanha encontrada.</p>";
+            return;
+        }
+
+        resultsDiv.innerHTML = campanhas.map(c => `
+            <div class="card" onclick="goToCampanha('${c.id}')">
+                <div class="title">${c.titulo}</div>
+                
+                <div class="subtitle">
+                    ONG: ${c.ong.nome}
+                </div>
+
+                <div class="extra">
+                    Status: ${c.status}
+                </div>
+
+                <div class="extra">
+                    ${c.descricao || ""}
+                </div>
+            </div>
+        `).join("");
+    }
+
+    function goToCampanha(id) {
+        window.location.href = `/campaign/${id}`;
+    }
+</script>
+
+{% endblock %}

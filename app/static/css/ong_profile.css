@@ -80,3 +80,14 @@ ul.ong-meta li, ul.ong-contacts li, .ong-sidebar ul li {
   background-color: #f8d7da;
   color: #721c24;
 }
+
+.campanha-link {
+  text-decoration: none;
+  color: inherit;
+  transition: 0.2s;
+}
+
+.campanha-link:hover {
+  text-decoration: underline;
+  color: #007bff;
+}
