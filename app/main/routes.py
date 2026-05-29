@@ -1,7 +1,7 @@
 from flask import render_template, request, jsonify
 
 from app.main import main_bp
-from app.models import db, Ong
+from app.models import db, Ong, Campanha
 from tests.test_models import ong
 
 
@@ -13,9 +13,46 @@ def index():
 def health_check():
     return {"status": "ok"}, 200
 
-@main_bp.get("/search")
+@main_bp.get("/ongs")
 def search():
-    return render_template("search.html")
+    return render_template("search_ongs.html")
+
+@main_bp.get("/campaigns")
+def campanhas_page():
+    return render_template("search_campaigns.html")
+
+@main_bp.get("/campaign/<uuid:campanha_id>")
+def campanha_detail(campanha_id):
+    campanha = Campanha.query.get_or_404(campanha_id)
+
+    return render_template(
+        "campaign_detail.html",
+        campanha=campanha
+    )
+
+@main_bp.get("/api/campaigns")
+def search_campanhas():
+    termo = request.args.get("q", "")
+
+    campanhas = Campanha.query.join(Ong).filter(
+        Campanha.titulo.ilike(f"%{termo}%")
+    ).all()
+
+    return jsonify([
+        {
+            "id": str(c.id),
+            "titulo": c.titulo,
+            "descricao": c.descricao,
+            "status": c.status,
+            "data_inicio": c.data_inicio.isoformat() if c.data_inicio else None,
+            "data_fim": c.data_fim.isoformat() if c.data_fim else None,
+            "ong": {
+                "id": str(c.ong.id),
+                "nome": c.ong.nome
+            }
+        }
+        for c in campanhas
+    ])
 
 
 @main_bp.get("/ong/<uuid:ong_id>")

@@ -19,18 +19,18 @@
     <div class="ong-main-info">
       <h3>Sobre a ONG</h3>
       <p class="ong-description">{{ ong.descricao }}</p>
-      
+
       <h3>Detalhes</h3>
       <ul class="ong-meta">
         <li><strong>CNPJ:</strong> {{ ong.cnpj }}</li>
       </ul>
-      
+
       <h3>Contatos</h3>
       <ul class="ong-contacts">
         {% for contato in ong.contatos %}
-          <li><strong>{{ contato.tipo_contato }}:</strong> {{ contato.valor }}</li>
+        <li><strong>{{ contato.tipo_contato }}:</strong> {{ contato.valor }}</li>
         {% else %}
-          <li>Nenhum contato cadastrado.</li>
+        <li>Nenhum contato cadastrado.</li>
         {% endfor %}
       </ul>
     </div>
@@ -40,12 +40,17 @@
         <h3>Campanhas</h3>
         <ul>
           {% for campanha in ong.campanhas %}
-            <li>
-              <strong>{{ campanha.titulo }}</strong> 
-              <span class="badge {{ 'active' if campanha.status == 'ativa' else 'inactive' }}">{{ campanha.status }}</span>
-            </li>
+          <li>
+            <a href="/campaign/{{ campanha.id }}" class="campanha-link">
+              <strong>{{ campanha.titulo }}</strong>
+            </a>
+
+            <span class="badge {{ 'active' if campanha.status == 'ativa' else 'inactive' }}">
+              {{ campanha.status }}
+            </span>
+          </li>
           {% else %}
-            <li>Nenhuma campanha no momento.</li>
+          <li>Nenhuma campanha no momento.</li>
           {% endfor %}
         </ul>
       </div>
@@ -54,16 +59,16 @@
         <h3>Últimas Notícias</h3>
         <ul>
           {% for noticia in ong.noticias %}
-            <li>
-              {% if noticia.link %}
-                <a href="{{ noticia.link }}" target="_blank" rel="noopener noreferrer">{{ noticia.titulo }}</a>
-              {% else %}
-                {{ noticia.titulo }}
-              {% endif %}
-              <small>({{ noticia.data_publicacao }})</small>
-            </li>
+          <li>
+            {% if noticia.link %}
+            <a href="{{ noticia.link }}" target="_blank" rel="noopener noreferrer">{{ noticia.titulo }}</a>
+            {% else %}
+            {{ noticia.titulo }}
+            {% endif %}
+            <small>({{ noticia.data_publicacao }})</small>
+          </li>
           {% else %}
-            <li>Nenhuma notícia recente.</li>
+          <li>Nenhuma notícia recente.</li>
           {% endfor %}
         </ul>
       </div>
