@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 import uuid
 import datetime
-from sqlalchemy import String, Text, ForeignKey, Date, DateTime, func, Uuid
+from sqlalchemy import Enum, String, Text, ForeignKey, Date, DateTime, func, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional, List
 
@@ -63,3 +63,12 @@ class Noticia(db.Model):
     link: Mapped[Optional[str]] = mapped_column(String)
     
     ong: Mapped["Ong"] = relationship(back_populates="noticias")
+
+class Usuario(db.Model):
+    __tablename__ = 'usuario'
+    
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nome: Mapped[str] = mapped_column(String(255))
+    email: Mapped[str] = mapped_column(String(255), unique=True)
+    senha_hash: Mapped[str] = mapped_column(String(255))
+    tipo: Mapped[str] = mapped_column(String(20), nullable=False)

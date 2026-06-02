@@ -9,10 +9,37 @@
     Este e o ponto de partida da plataforma. O proximo passo e criar os modulos de ONGs,
     campanhas, noticias e avaliacoes.
   </p>
+
+  <!-- 🔐 Auth actions -->
+  <div style="margin-bottom: 20px;">
+    {% if session.user_id %}
+    <span>Olá, {{ session.user_nome }}</span>
+    <form action="/auth/logout" method="POST" style="display:inline;">
+      <button type="submit">Sair</button>
+    </form>
+    {% else %}
+    <a href="/auth/login">
+      <button>Login</button>
+    </a>
+    <a href="/auth/register">
+      <button>Registrar</button>
+    </a>
+    {% endif %}
+  </div>
+
   <ul>
-    <li>Rota inicial em <code>/</code></li>
-    <li>Health check em <code>/health</code></li>
-    <li>Estrutura preparada para crescer com blueprints</li>
+    <li>
+      <a href="/">Página inicial</a>
+    </li>
+    <li>
+      <a href="/health">Health check</a>
+    </li>
+    <li>
+      <a href="/ongs">Ver ONGs</a>
+    </li>
+    <li>
+      <a href="/campaigns">Ver campanhas</a>
+    </li>
   </ul>
 </section>
 {% endblock %}
