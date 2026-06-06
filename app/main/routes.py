@@ -1,13 +1,40 @@
 from flask import render_template, request, jsonify
 
 from app.main import main_bp
-from app.models import db, Ong, Campanha
+from app.models import db, Ong, Campanha, AreaAtuacao
 from tests.test_models import ong
 
 
 @main_bp.get("/")
 def index():
     return render_template("index.html")
+
+@main_bp.get("/home")
+def home():
+    areas = AreaAtuacao.query.all()
+
+    total_ongs = Ong.query.count()
+    total_campanhas = Campanha.query.filter_by(status='ativa').count()
+    total_areas = len(areas)
+
+    campanhas_por_area = {}
+    for area in areas:
+        campanhas_ativas = (
+            Campanha.query
+            .join(Ong)
+            .filter(Ong.id_area_atuacao == area.id, Campanha.status == "ativa")
+            .all()
+        )
+        if campanhas_ativas:
+            campanhas_por_area[area.nome_area] = campanhas_ativas
+
+    return render_template(
+        "home.html", 
+        campanhas_por_area=campanhas_por_area,
+        total_ongs=total_ongs,
+        total_campanhas=total_campanhas,
+        total_areas=total_areas
+    )
 
 @main_bp.get("/health")
 def health_check():
