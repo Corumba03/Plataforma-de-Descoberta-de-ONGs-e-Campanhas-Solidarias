@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Editar ONG{% endblock %}
+
+{% block content %}
+
+<h2>Editar ONG</h2>
+
+<form id="editOngForm">
+    <input type="text" name="nome" placeholder="Nome" value="{{ ong.nome }}" required>
+
+```
+<input type="text" name="cnpj" placeholder="CNPJ" value="{{ ong.cnpj }}" required>
+
+<textarea name="descricao" placeholder="Descrição" required>{{ ong.descricao }}</textarea>
+
+<button type="submit">Salvar alterações</button>
+```
+
+</form>
+
+<script>
+document.getElementById("editOngForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    const data = {
+        nome: formData.get("nome"),
+        cnpj: formData.get("cnpj"),
+        descricao: formData.get("descricao")
+    };
+
+    try {
+        const response = await fetch("/api/ongs/{{ ong.id }}", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            alert("ONG atualizada com sucesso!");
+            window.location.href = "/";
+        } else {
+            const erro = await response.json();
+            alert(erro.message || "Erro ao atualizar ONG");
+        }
+    } catch (err) {
+        alert("Erro na requisição");
+    }
+});
+</script>
+
+{% endblock %}

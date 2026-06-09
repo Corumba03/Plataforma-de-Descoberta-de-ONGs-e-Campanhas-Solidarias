@@ -29,6 +29,7 @@ Foram levantadas ideias iniciais para o sistema, incluindo:
   - Organizador (ONG)
 - Funcionalidades principais:
   - Visualização de ONGs e campanhas
+  - Doações
   - Interesse em voluntariado
 - Estrutura inicial do sistema
 

@@ -167,3 +167,62 @@ def login():
 def logout():
     session.clear()
     return redirect("/")
+
+
+@main_bp.put("/api/ongs/<uuid:ong_id>")
+def update_ong(ong_id):
+    ong = db.get_or_404(Ong, ong_id)
+
+    data = request.get_json()
+
+    ong.nome = data.get("nome", ong.nome)
+    ong.descricao = data.get("descricao", ong.descricao)
+    ong.cnpj = data.get("cnpj", ong.cnpj)
+
+    db.session.commit()
+
+    return jsonify({"message": "ONG atualizada com sucesso"}), 200
+
+
+@main_bp.put("/api/users/<uuid:user_id>")
+def update_user(user_id):
+    user = db.get_or_404(Usuario, user_id)
+
+    data = request.get_json()
+
+    user.nome = data.get("nome", user.nome)
+    user.email = data.get("email", user.email)
+
+    if data.get("senha"):
+        user.senha_hash = generate_password_hash(data.get("senha"))
+
+    db.session.commit()
+
+    return jsonify({"message": "Usuário atualizado com sucesso"}), 200
+
+
+@main_bp.get("/edit/user")
+def edit_user_page():
+    # 🔒 precisa estar logado
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    user = db.get_or_404(Usuario, session["user_id"])
+
+    return render_template("edit_user.html", user=user)
+
+
+@main_bp.get("/edit/ong/<uuid:ong_id>")
+def edit_ong_page(ong_id):
+    # 🔒 precisa estar logado
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    ong = db.get_or_404(Ong, ong_id)
+
+    # 🔒 regra básica de autorização (ajuste conforme seu modelo)
+    # Exemplo: só organizador pode editar
+    if session.get("tipo") != "organizador":
+        return "Acesso negado", 403
+
+    return render_template("edit_ong.html", ong=ong)

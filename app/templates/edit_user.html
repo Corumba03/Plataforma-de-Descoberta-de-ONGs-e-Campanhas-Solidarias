@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Usuário{% endblock %}
+
+{% block content %}
+
+<h2>Editar Usuário</h2>
+
+<form id="editUserForm">
+    <input type="text" name="nome" placeholder="Nome" value="{{ user.nome }}" required>
+
+```
+<input type="email" name="email" placeholder="Email" value="{{ user.email }}" required>
+
+<input type="password" name="senha" placeholder="Nova senha (opcional)">
+
+<select name="tipo">
+    <option value="usuario" {% if user.tipo == 'usuario' %}selected{% endif %}>Usuário</option>
+    <option value="organizador" {% if user.tipo == 'organizador' %}selected{% endif %}>Organizador</option>
+</select>
+
+<button type="submit">Salvar alterações</button>
+```
+
+</form>
+
+<script>
+document.getElementById("editUserForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    const data = {
+        nome: formData.get("nome"),
+        email: formData.get("email"),
+        tipo: formData.get("tipo")
+    };
+
+    const senha = formData.get("senha");
+    if (senha) {
+        data.senha = senha;
+    }
+
+    try {
+        const response = await fetch("/api/users/{{ user.id }}", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            alert("Usuário atualizado com sucesso!");
+            window.location.href = "/";
+        } else {
+            const erro = await response.json();
+            alert(erro.message || "Erro ao atualizar usuário");
+        }
+    } catch (err) {
+        alert("Erro na requisição");
+    }
+});
+</script>
+
+{% endblock %}
