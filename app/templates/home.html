@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Home | Plataforma Solidária{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}" />
+{% endblock %}
+
+{% block page_header %}{% endblock %}
+
+{% block main_class %}{% endblock %}
+
+{% block content %}
+    <section class="intro" id="intro">
+      <span class="intro_badge">Plataforma de Impacto Social</span>
+
+      <h1 class="intro_title">
+        Conecte-se a <em>causas que transformam</em> comunidades
+      </h1>
+
+      <p class="intro_subtitle">
+        Descubra ONGs, participe de campanhas e faça a diferença.
+        Encontre organizações por área de atuação e apoie quem mais precisa.
+      </p>
+
+      <div class="search" id="searchArea">
+        <div class="banner_buttons">
+          <a href="/ongs" class="btn btn_primary">Buscar ONGs</a>
+          <a href="/campaigns" class="btn btn_outline">Buscar Campanhas</a>
+        </div>
+      </div>
+
+      <div class="stats" id="introStats">
+        <div class="stats_item">
+          <span class="stats_number" id="statOngs">{{ total_ongs }}</span>
+          <span class="stats_label">ONGs cadastradas</span>
+        </div>
+        <div class="stats_item">
+          <span class="stats_number" id="statCampanhas">{{ total_campanhas }}</span>
+          <span class="stats_label">Campanhas ativas</span>
+        </div>
+        <div class="stats_item">
+          <span class="stats_number" id="statAreas">{{ total_areas }}</span>
+          <span class="stats_label">Áreas de atuação</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="campanhasSection">
+      <div class="section_header">
+        <span class="section_tag">Campanhas Ativas</span>
+        <h2 class="section_title">Explore por área de atuação</h2>
+        <p class="section_subtitle">
+          Conheça as campanhas que estão acontecendo agora, organizadas pela área em que cada ONG atua.
+        </p>
+      </div>
+
+      <div class="areas">
+        {% if campanhas_por_area %}
+          {% for area, campanhas in campanhas_por_area.items() %}
+          <div class="area_group">
+            <h3 class="area_group_title">
+              <span class="area_group_icon">
+                {% if 'Educação' in area %}📚
+                {% elif 'Saúde' in area %}🏥
+                {% elif 'Meio Ambiente' in area %}🌿
+                {% elif 'Assistência' in area %}🤝
+                {% elif 'Cultura' in area %}🎨
+                {% else %}📌
+                {% endif %}
+              </span>
+              {{ area }}
+            </h3>
+            <div class="campaigns_grid">
+              {% for c in campanhas %}
+              <a href="/campaign/{{ c.id }}" class="campaign_card" id="campaign-{{ c.id }}">
+                <span class="campaign_card_status">Ativa</span>
+                <h4 class="campaign_card_title">{{ c.titulo }}</h4>
+                <p class="campaign_card_desc">{{ c.descricao or '' }}</p>
+                <div class="campaign_card_meta">
+                  <span class="campaign_card_ong">{{ c.ong.nome }}</span>
+                </div>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty">
+            <div class="empty_icon">📭</div>
+            <p>Nenhuma campanha ativa no momento.</p>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="section features" id="featuresSection">
+      <div class="section_header">
+        <span class="section_tag">Como funciona</span>
+        <h2 class="section_title">Simples, transparente e impactante</h2>
+        <p class="section_subtitle">
+          A plataforma conecta você diretamente às organizações que fazem a diferença.
+        </p>
+      </div>
+
+      <div class="features_grid">
+        <div class="feature_card">
+          <div class="feature_card_icon">🔍</div>
+          <h3 class="feature_card_title">Descubra ONGs</h3>
+          <p class="feature_card_text">
+            Pesquise organizações por nome, área de atuação ou localização e encontre quem está mais perto de você.
+          </p>
+        </div>
+        <div class="feature_card">
+          <div class="feature_card_icon">📢</div>
+          <h3 class="feature_card_title">Acompanhe campanhas</h3>
+          <p class="feature_card_text">
+            Veja campanhas ativas em tempo real e saiba como participar, doar ou voluntariar-se.
+          </p>
+        </div>
+        <div class="feature_card">
+          <div class="feature_card_icon">🤝</div>
+          <h3 class="feature_card_title">Faça a diferença</h3>
+          <p class="feature_card_text">
+            Conecte-se diretamente com as ONGs, apoie causas relevantes e acompanhe o impacto social.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="banner" id="bannerSection">
+      <h2 class="banner_title">Pronto para fazer a diferença?</h2>
+      <p class="banner_text">
+        Explore as ONGs e campanhas cadastradas na plataforma e encontre a sua causa.
+      </p>
+      <div class="banner_buttons">
+        <a href="/ongs" class="btn btn_primary">Explorar ONGs</a>
+        <a href="/campaigns" class="btn btn_outline">Ver campanhas</a>
+      </div>
+    </section>
+{% endblock %}

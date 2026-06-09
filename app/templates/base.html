@@ -3,18 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Plataforma Solidaria{% endblock %}</title>
+    <title>{% block title %}Plataforma Solidária{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
     {% block extra_css %}{% endblock %}
   </head>
   <body>
-    <header class="site-header">
-      <h1>Plataforma de Descoberta de ONGs</h1>
-      <p>Conectando pessoas a causas que transformam comunidades.</p>
+    <header class="site-header-global">
+      <nav class="navbar" id="navbar">
+        <a href="/home" class="navbar_brand">Plataforma<span>Solidária</span></a>
+        <ul class="navbar_links">
+          <li><a href="/ongs">ONGs</a></li>
+          <li><a href="/campaigns">Campanhas</a></li>
+        </ul>
+      </nav>
     </header>
 
-    <main class="container">
+    {% block page_header %}
+    <div class="site-header">
+      <h1>Plataforma de Descoberta de ONGs</h1>
+      <p>Conectando pessoas a causas que transformam comunidades.</p>
+    </div>
+    {% endblock %}
+
+    <main class="{% block main_class %}container{% endblock %}">
       {% block content %}{% endblock %}
     </main>
+
+    <footer class="footer">
+      <p>&copy; 2026 <a href="/home">Plataforma Solidária</a> — Conectando pessoas a causas que transformam.</p>
+    </footer>
   </body>
 </html>
