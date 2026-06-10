@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 
 {% block title %}Inicio | Plataforma Solidaria{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}" />
+{% endblock %}
 
 {% block content %}
+
 <section class="hero">
   <h2>Projeto iniciado com Flask</h2>
   <p>
@@ -10,26 +14,9 @@
     campanhas, noticias e avaliacoes.
   </p>
 
-  <!-- 🔐 Auth actions -->
-  <div style="margin-bottom: 20px;">
-    {% if session.user_id %}
-    <span>Olá, {{ session.user_nome }}</span>
-    <form action="/auth/logout" method="POST" style="display:inline;">
-      <button type="submit">Sair</button>
-    </form>
-    {% else %}
-    <a href="/auth/login">
-      <button>Login</button>
-    </a>
-    <a href="/auth/register">
-      <button>Registrar</button>
-    </a>
-    {% endif %}
-  </div>
-
   <ul>
     <li>
-      <a href="/">Página inicial</a>
+      <a href="/home">Home</a>
     </li>
     <li>
       <a href="/health">Health check</a>
@@ -40,6 +27,29 @@
     <li>
       <a href="/campaigns">Ver campanhas</a>
     </li>
+    <li>
+      <a href="/auth/login">Login</a>
+    </li>
+    <li>
+      <a href="/auth/register">Registrar</a>
+    </li>
   </ul>
+
+
+  <div style="display:flex; align-items:center; justify-content:justify-between;">
+    {% if session.user_id %}
+    <span style="margin-right:10px; font-weight:bold; size:1.1em; color:green;">
+      Usuário {{ session.user_nome }} logado
+    </span>
+
+    <form action="/auth/logout?page=index" method="POST" style="display:inline;">
+      <button class="btn btn_outline">Sair</button>
+    </form>
+    {% else %}
+    <span style="margin-right:10px; font-weight:bold; size:1.1em; color:red;">
+      Nenhum usuário logado
+    </span>
+    {% endif %}
+  </div>
 </section>
 {% endblock %}

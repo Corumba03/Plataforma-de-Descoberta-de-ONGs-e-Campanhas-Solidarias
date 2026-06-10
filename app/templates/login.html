@@ -2,18 +2,47 @@
 
 {% block title %}Login{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}" />
+{% endblock %}
+
 {% block content %}
 
-<h2>Login</h2>
+<h2 style="margin-bottom:20px; text-align:center;">Entrar</h2>
 
-<form method="POST" action="/auth/login">
-  <label>Email:</label><br>
-  <input type="email" name="email" required><br><br>
+<form method="POST" action="/auth/login" style="display:flex; flex-direction:column; gap:15px; align-items:center; max-width:400px; margin:0 auto;">
+  
+  <div>
+    <label>Email</label>
+    <input 
+      type="email" 
+      name="email" 
+      required
+      style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;"
+    >
+  </div>
 
-  <label>Senha:</label><br>
-  <input type="password" name="senha" required><br><br>
+  <div>
+    <label>Senha</label>
+    <input 
+      type="password" 
+      name="senha" 
+      required
+      style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;"
+    >
+  </div>
 
-  <button type="submit">Entrar</button>
+  <button type="submit" class="btn btn_primary" style="width:200px">
+    Entrar
+  </button>
+
 </form>
+
+<div style="margin-top:20px; text-align:center;">
+  <span>Não tem conta?</span>
+  <a href="/auth/register" class="btn btn_outline" style="margin-left:10px;">
+    Registrar
+  </a>
+</div>
 
 {% endblock %}

@@ -1,4 +1,5 @@
 from flask import request, render_template, session, redirect, url_for, jsonify
+from uuid import UUID
 
 from app.main import main_bp
 from app.models import db, Ong, Campanha, AreaAtuacao, Usuario
@@ -163,7 +164,7 @@ def register():
         session["user_id"] = user.id
         session["tipo"] = user.tipo
 
-        return redirect("/")
+        return redirect("/home")
 
     return render_template("register.html")
 
@@ -188,12 +189,18 @@ def login():
         session["user_nome"] = user.nome
         session["tipo"] = user.tipo
 
-        return redirect('/')
+        return redirect('/home')
     
 @main_bp.post("/auth/logout")
 def logout():
     session.clear()
-    return redirect("/")
+
+    page = request.args.get("page")
+
+    if page == "index":
+        return redirect("/")
+    
+    return redirect("/home")
 
 
 @main_bp.put("/api/ongs/<uuid:ong_id>")
@@ -225,16 +232,20 @@ def update_user(user_id):
 
     db.session.commit()
 
+    session["user_nome"] = user.nome  # Atualiza o nome na sessão para refletir a mudança
+
     return jsonify({"message": "Usuário atualizado com sucesso"}), 200
 
 
 @main_bp.get("/edit/user")
 def edit_user_page():
     # 🔒 precisa estar logado
+    print("session", session)
     if "user_id" not in session:
         return redirect(url_for("main.login"))
 
-    user = db.get_or_404(Usuario, session["user_id"])
+    user_id = UUID(session["user_id"])
+    user = db.get_or_404(Usuario, user_id)
 
     return render_template("edit_user.html", user=user)
 
