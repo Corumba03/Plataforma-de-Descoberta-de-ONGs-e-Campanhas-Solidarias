@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Usuário{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<h2>Editar Usuário</h2>
+
+<form id="editUserForm" style="display:flex; flex-direction:column; gap:15px; align-items:center; max-width:400px; margin:0 auto;">
+
+    <div>
+        <label class="label">Nome</label>
+        <input 
+            name="nome" 
+            value="{{ user.nome }}" 
+            required
+            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;"
+        >
+    </div>
+
+    <div>
+        <label>Email</label>
+        <input 
+            type="email" 
+            name="email" 
+            value="{{ user.email }}" 
+            required
+            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;"
+        >
+    </div>
+
+    <div>
+        <label>Nova senha</label>
+        <input 
+            type="password" 
+            name="senha" 
+            placeholder="Opcional"
+            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;"
+        >
+    </div>
+
+    <div>
+        <span>
+            Tipo de conta: <strong>{{ user.tipo }}</strong>
+        </span>
+    </div>
+
+    <button type="submit" class="btn btn_primary" style="width:200px">
+        Salvar alterações
+    </button>
+
+</form>
+
+<script>
+    document.getElementById("editUserForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        const data = {
+            nome: formData.get("nome"),
+            email: formData.get("email"),
+            tipo: formData.get("tipo")
+        };
+
+        const senha = formData.get("senha");
+        if (senha) {
+            data.senha = senha;
+        }
+
+        try {
+            const response = await fetch("/api/users/{{ user.id }}", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                alert("Usuário atualizado com sucesso!");
+                window.location.href = "/home";
+            } else {
+                const erro = await response.json();
+                alert(erro.message || "Erro ao atualizar usuário");
+            }
+        } catch (err) {
+            alert("Erro na requisição");
+        }
+    });
+</script>
+
+{% endblock %}

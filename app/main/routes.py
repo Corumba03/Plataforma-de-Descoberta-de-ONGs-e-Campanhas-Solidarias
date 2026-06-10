@@ -1,12 +1,15 @@
-from flask import render_template, request, jsonify
+from flask import request, render_template, session, redirect, url_for, jsonify
+from uuid import UUID
 
 from app.main import main_bp
-from app.models import db, Ong, Campanha, AreaAtuacao
+from app.models import db, Ong, Campanha, AreaAtuacao, Usuario
 from tests.test_models import ong
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 @main_bp.get("/")
 def index():
+    print(session)
     return render_template("index.html")
 
 @main_bp.get("/home")
@@ -129,3 +132,135 @@ def search_ongs():
         }
         for ong in ongs
     ])
+
+###########################
+# Rotas de autenticação
+###########################
+
+@main_bp.route("/auth/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        nome = request.form.get("nome")
+        email = request.form.get("email")
+        senha = request.form.get("senha")
+        tipo = request.form.get("tipo")
+
+        # Verifica se já existe usuário
+        user_existente = Usuario.query.filter_by(email=email).first()
+        if user_existente:
+            return "Usuário já existe", 400
+
+        user = Usuario(
+            nome=nome,
+            email=email,
+            senha_hash=generate_password_hash(senha),
+            tipo=tipo
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        # 🔐 cria sessão automaticamente (login automático)
+        session["user_id"] = user.id
+        session["tipo"] = user.tipo
+
+        return redirect("/home")
+
+    return render_template("register.html")
+
+
+@main_bp.route("/auth/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "GET":
+        return render_template("login.html")
+
+    elif request.method == "POST":
+        email = request.form.get("email")
+        senha = request.form.get("senha")
+
+        user = Usuario.query.filter_by(email=email).first()
+
+        if not user or not check_password_hash(user.senha_hash, senha):
+            return render_template("login.html", erro="Credenciais inválidas")
+
+        # 🔥 AQUI É O LOGIN DE VERDADE
+        session["user_id"] = str(user.id)
+        session["user_nome"] = user.nome
+        session["tipo"] = user.tipo
+
+        return redirect('/home')
+    
+@main_bp.post("/auth/logout")
+def logout():
+    session.clear()
+
+    page = request.args.get("page")
+
+    if page == "index":
+        return redirect("/")
+    
+    return redirect("/home")
+
+
+@main_bp.put("/api/ongs/<uuid:ong_id>")
+def update_ong(ong_id):
+    ong = db.get_or_404(Ong, ong_id)
+
+    data = request.get_json()
+
+    ong.nome = data.get("nome", ong.nome)
+    ong.descricao = data.get("descricao", ong.descricao)
+    ong.cnpj = data.get("cnpj", ong.cnpj)
+
+    db.session.commit()
+
+    return jsonify({"message": "ONG atualizada com sucesso"}), 200
+
+
+@main_bp.put("/api/users/<uuid:user_id>")
+def update_user(user_id):
+    user = db.get_or_404(Usuario, user_id)
+
+    data = request.get_json()
+
+    user.nome = data.get("nome", user.nome)
+    user.email = data.get("email", user.email)
+
+    if data.get("senha"):
+        user.senha_hash = generate_password_hash(data.get("senha"))
+
+    db.session.commit()
+
+    session["user_nome"] = user.nome  # Atualiza o nome na sessão para refletir a mudança
+
+    return jsonify({"message": "Usuário atualizado com sucesso"}), 200
+
+
+@main_bp.get("/edit/user")
+def edit_user_page():
+    # 🔒 precisa estar logado
+    print("session", session)
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    user_id = UUID(session["user_id"])
+    user = db.get_or_404(Usuario, user_id)
+
+    return render_template("edit_user.html", user=user)
+
+
+@main_bp.get("/edit/ong/<uuid:ong_id>")
+def edit_ong_page(ong_id):
+    # 🔒 precisa estar logado
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    ong = db.get_or_404(Ong, ong_id)
+
+    # 🔒 regra básica de autorização (ajuste conforme seu modelo)
+    # Exemplo: só organizador pode editar
+    if session.get("tipo") != "organizador":
+        return "Acesso negado", 403
+
+    return render_template("edit_ong.html", ong=ong)

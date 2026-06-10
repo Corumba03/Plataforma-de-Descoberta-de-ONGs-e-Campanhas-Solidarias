@@ -1,18 +1,55 @@
 {% extends "base.html" %}
 
 {% block title %}Inicio | Plataforma Solidaria{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}" />
+{% endblock %}
 
 {% block content %}
+
 <section class="hero">
   <h2>Projeto iniciado com Flask</h2>
   <p>
     Este e o ponto de partida da plataforma. O proximo passo e criar os modulos de ONGs,
     campanhas, noticias e avaliacoes.
   </p>
+
   <ul>
-    <li>Rota inicial em <code>/</code></li>
-    <li>Health check em <code>/health</code></li>
-    <li>Estrutura preparada para crescer com blueprints</li>
+    <li>
+      <a href="/home">Home</a>
+    </li>
+    <li>
+      <a href="/health">Health check</a>
+    </li>
+    <li>
+      <a href="/ongs">Ver ONGs</a>
+    </li>
+    <li>
+      <a href="/campaigns">Ver campanhas</a>
+    </li>
+    <li>
+      <a href="/auth/login">Login</a>
+    </li>
+    <li>
+      <a href="/auth/register">Registrar</a>
+    </li>
   </ul>
+
+
+  <div style="display:flex; align-items:center; justify-content:justify-between;">
+    {% if session.user_id %}
+    <span style="margin-right:10px; font-weight:bold; size:1.1em; color:green;">
+      Usuário {{ session.user_nome }} logado
+    </span>
+
+    <form action="/auth/logout?page=index" method="POST" style="display:inline;">
+      <button class="btn btn_outline">Sair</button>
+    </form>
+    {% else %}
+    <span style="margin-right:10px; font-weight:bold; size:1.1em; color:red;">
+      Nenhum usuário logado
+    </span>
+    {% endif %}
+  </div>
 </section>
 {% endblock %}
