@@ -205,9 +205,11 @@ def logout():
 
 @main_bp.put("/api/ongs/<uuid:ong_id>")
 def update_ong(ong_id):
-    ong = db.get_or_404(Ong, ong_id)
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"message": "payload JSON inválido"}), 400
 
-    data = request.get_json()
+    ong = db.get_or_404(Ong, ong_id)
 
     ong.nome = data.get("nome", ong.nome)
     ong.descricao = data.get("descricao", ong.descricao)
@@ -220,9 +222,11 @@ def update_ong(ong_id):
 
 @main_bp.put("/api/users/<uuid:user_id>")
 def update_user(user_id):
-    user = db.get_or_404(Usuario, user_id)
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"message": "payload JSON inválido"}), 400
 
-    data = request.get_json()
+    user = db.get_or_404(Usuario, user_id)
 
     user.nome = data.get("nome", user.nome)
     user.email = data.get("email", user.email)

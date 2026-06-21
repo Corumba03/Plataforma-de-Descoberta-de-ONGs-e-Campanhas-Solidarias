@@ -85,6 +85,78 @@ class TestHome:
         assert b"Conecte-se a <em>causas que transformam</em> comunidades" in r.data
         assert b"Nenhuma campanha ativa no momento." in r.data
 
+    @patch("app.main.routes.Campanha.query")
+    @patch("app.main.routes.Ong.query")
+    @patch("app.main.routes.AreaAtuacao.query")
+    def test_retorna_home_com_campanhas_por_area(self, mock_area_query, mock_ong_query, mock_camp_query, client):
+        area = MagicMock(spec=AreaAtuacao)
+        area.id = uuid.uuid4()
+        area.nome_area = "Educação"
+
+        camp = _mock_campanha(titulo="Campanha Educação", status="ativa")
+        camp.id = uuid.uuid4()
+        camp.descricao = "Apoio escolar"
+        camp.ong = _mock_ong(id=uuid.uuid4(), nome="ONG Escola")
+
+        mock_area_query.all.return_value = [area]
+        mock_ong_query.count.return_value = 5
+        mock_camp_query.filter_by.return_value.count.return_value = 2
+        mock_camp_query.join.return_value.filter.return_value.all.return_value = [camp]
+
+        r = client.get("/home")
+
+        assert r.status_code == 200
+        assert "Educação".encode() in r.data
+        assert b"Campanha Educa\xc3\xa7\xc3\xa3o" in r.data
+        assert b"ONG Escola" in r.data
+        assert b"ONGs cadastradas" in r.data
+        assert b"Campanhas ativas" in r.data
+
+    @patch("app.main.routes.Campanha.query")
+    @patch("app.main.routes.Ong.query")
+    @patch("app.main.routes.AreaAtuacao.query")
+    def test_home_usuario_organizador_exibe_botoes_gestao(
+        self, mock_area_query, mock_ong_query, mock_camp_query, client
+    ):
+        mock_area_query.all.return_value = []
+        mock_ong_query.count.return_value = 1
+        mock_camp_query.filter_by.return_value.count.return_value = 1
+
+        with client.session_transaction() as sess:
+            sess["user_id"] = str(uuid.uuid4())
+            sess["user_nome"] = "Ana"
+            sess["tipo"] = "organizador"
+
+        r = client.get("/home")
+
+        assert r.status_code == 200
+        assert "Olá, Ana".encode() in r.data
+        assert b"Gerenciar Perfil" in r.data
+        assert b"Gerenciar ONG" in r.data
+        assert b"Login" not in r.data
+
+    @patch("app.main.routes.Campanha.query")
+    @patch("app.main.routes.Ong.query")
+    @patch("app.main.routes.AreaAtuacao.query")
+    def test_home_usuario_comum_nao_exibe_botao_gerenciar_ong(
+        self, mock_area_query, mock_ong_query, mock_camp_query, client
+    ):
+        mock_area_query.all.return_value = []
+        mock_ong_query.count.return_value = 1
+        mock_camp_query.filter_by.return_value.count.return_value = 1
+
+        with client.session_transaction() as sess:
+            sess["user_id"] = str(uuid.uuid4())
+            sess["user_nome"] = "Leo"
+            sess["tipo"] = "usuario"
+
+        r = client.get("/home")
+
+        assert r.status_code == 200
+        assert "Olá, Leo".encode() in r.data
+        assert b"Gerenciar Perfil" in r.data
+        assert b"Gerenciar ONG" not in r.data
+
 
 class TestSearchPages:
 
@@ -97,6 +169,36 @@ class TestSearchPages:
         r = client.get("/campaigns")
         assert r.status_code == 200
         assert b"Buscar campanhas" in r.data
+
+
+class TestCampaignDetail:
+
+    @patch("app.main.routes.Campanha.query")
+    def test_campanha_detail_existente(self, mock_camp_query, client):
+        ong = _mock_ong(id=uuid.uuid4(), nome="ONG Esperança")
+        campanha = _mock_campanha(titulo="Mutirão Solidário", status="ativa")
+        campanha.id = uuid.uuid4()
+        campanha.descricao = "Descrição detalhada"
+        campanha.data_inicio = date(2026, 3, 1)
+        campanha.data_fim = date(2026, 3, 31)
+        campanha.ong = ong
+        mock_camp_query.get_or_404.return_value = campanha
+
+        r = client.get(f"/campaign/{campanha.id}")
+
+        assert r.status_code == 200
+        assert b"Mutir\xc3\xa3o Solid\xc3\xa1rio" in r.data
+        assert b"ONG Esperan\xc3\xa7a" in r.data
+        assert b"Descri\xc3\xa7\xc3\xa3o detalhada" in r.data
+        assert f"/ong/{ong.id}".encode() in r.data
+
+    @patch("app.main.routes.Campanha.query")
+    def test_campanha_detail_inexistente(self, mock_camp_query, client):
+        mock_camp_query.get_or_404.side_effect = NotFound()
+
+        r = client.get(f"/campaign/{uuid.uuid4()}")
+
+        assert r.status_code == 404
 
 class TestHealth:
 
@@ -277,6 +379,32 @@ class TestAuth:
         assert "text/html" in r.content_type
         assert "Usuário já existe".encode() in r.data
 
+    @patch("app.main.routes.db.session.commit")
+    @patch("app.main.routes.db.session.add")
+    @patch("app.main.routes.Usuario.query")
+    def test_register_post_sucesso_cria_sessao_e_redireciona(
+        self, mock_user_query, mock_add, mock_commit, client
+    ):
+        mock_user_query.filter_by.return_value.first.return_value = None
+
+        r = client.post(
+            "/auth/register",
+            data={
+                "nome": "Nova Pessoa",
+                "email": "nova@teste.org",
+                "senha": "segredo",
+                "tipo": "organizador",
+            },
+        )
+
+        assert r.status_code == 302
+        assert r.headers["Location"].endswith("/home")
+        mock_add.assert_called_once()
+        mock_commit.assert_called_once()
+        with client.session_transaction() as sess:
+            assert "user_id" in sess
+            assert sess["tipo"] == "organizador"
+
     @patch("app.main.routes.check_password_hash")
     @patch("app.main.routes.Usuario.query")
     def test_login_post_sucesso_seta_sessao(self, mock_user_query, mock_check_hash, client):
@@ -298,6 +426,18 @@ class TestAuth:
         mock_user_query.filter_by.return_value.first.return_value = None
 
         r = client.post("/auth/login", data={"email": "x@x.com", "senha": "errada"})
+
+        assert r.status_code == 200
+        assert "text/html" in r.content_type
+        assert b"Entrar" in r.data
+
+    @patch("app.main.routes.check_password_hash")
+    @patch("app.main.routes.Usuario.query")
+    def test_login_post_usuario_existente_senha_invalida(self, mock_user_query, mock_check_hash, client):
+        mock_user_query.filter_by.return_value.first.return_value = _mock_usuario()
+        mock_check_hash.return_value = False
+
+        r = client.post("/auth/login", data={"email": "usuario@teste.org", "senha": "invalida"})
 
         assert r.status_code == 200
         assert "text/html" in r.content_type
@@ -412,6 +552,19 @@ class TestUpdateApis:
         assert r.status_code == 404
         mock_commit.assert_not_called()
 
+    @patch("app.main.routes.db.session.commit")
+    def test_update_ong_payload_invalido_retorna_400(self, mock_commit, client):
+        r = client.put(
+            f"/api/ongs/{uuid.uuid4()}",
+            data="nao-json",
+            headers={"Content-Type": "text/plain"},
+        )
+
+        assert r.status_code == 400
+        assert r.is_json
+        assert r.get_json()["message"] == "payload JSON inválido"
+        mock_commit.assert_not_called()
+
     @patch("app.main.routes.db.get_or_404")
     @patch("app.main.routes.db.session.commit")
     def test_update_user_atualiza_sessao(self, mock_commit, mock_get, client):
@@ -466,6 +619,19 @@ class TestUpdateApis:
         )
 
         assert r.status_code == 404
+        mock_commit.assert_not_called()
+
+    @patch("app.main.routes.db.session.commit")
+    def test_update_user_payload_invalido_retorna_400(self, mock_commit, client):
+        r = client.put(
+            f"/api/users/{uuid.uuid4()}",
+            data="nao-json",
+            headers={"Content-Type": "text/plain"},
+        )
+
+        assert r.status_code == 400
+        assert r.is_json
+        assert r.get_json()["message"] == "payload JSON inválido"
         mock_commit.assert_not_called()
 
 class TestRotaInexistente:
