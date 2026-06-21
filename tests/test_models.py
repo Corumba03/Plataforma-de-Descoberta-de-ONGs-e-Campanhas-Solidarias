@@ -92,6 +92,11 @@ class TestOng:
         with pytest.raises(IntegrityError):
             db.session.commit()
 
+    def test_area_atuacao_inexistente(self, db):
+        db.session.add(Ong(nome="Area Inexistente", cnpj="77777777000100", id_area_atuacao=uuid.uuid4()))
+        with pytest.raises(IntegrityError):
+            db.session.commit()
+
 
 class TestContatoOng:
 
@@ -106,6 +111,11 @@ class TestContatoOng:
 
     def test_ong_obrigatoria(self, db):
         db.session.add(ContatoOng(tipo_contato="Email", valor="x@y.com", id_ong=None))
+        with pytest.raises(IntegrityError):
+            db.session.commit()
+
+    def test_ong_inexistente(self, db):
+        db.session.add(ContatoOng(tipo_contato="Email", valor="x@y.com", id_ong=uuid.uuid4()))
         with pytest.raises(IntegrityError):
             db.session.commit()
 
@@ -143,6 +153,11 @@ class TestCampanha:
         with pytest.raises(IntegrityError):
             db.session.commit()
 
+    def test_ong_inexistente(self, db):
+        db.session.add(Campanha(titulo="ONG Inexistente", id_ong=uuid.uuid4()))
+        with pytest.raises(IntegrityError):
+            db.session.commit()
+
 
 class TestNoticia:
 
@@ -171,6 +186,11 @@ class TestNoticia:
 
     def test_ong_obrigatoria(self, db):
         db.session.add(Noticia(titulo="Sem ONG", id_ong=None))
+        with pytest.raises(IntegrityError):
+            db.session.commit()
+
+    def test_ong_inexistente(self, db):
+        db.session.add(Noticia(titulo="ONG Inexistente", id_ong=uuid.uuid4()))
         with pytest.raises(IntegrityError):
             db.session.commit()
 
