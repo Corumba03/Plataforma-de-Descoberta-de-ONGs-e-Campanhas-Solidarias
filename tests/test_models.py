@@ -1,7 +1,7 @@
 """Testes unitários para os modelos do banco de dados."""
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -80,6 +80,18 @@ class TestOng:
         assert ong.campanhas == []
         assert ong.noticias == []
 
+    def test_data_cadastro_gerada_automaticamente(self, db, area):
+        ong = Ong(nome="Com Data", cnpj="55555555000100", id_area_atuacao=area.id)
+        db.session.add(ong)
+        db.session.commit()
+
+        assert isinstance(ong.data_cadastro, datetime)
+
+    def test_area_atuacao_obrigatoria(self, db):
+        db.session.add(Ong(nome="Sem Area", cnpj="66666666000100", id_area_atuacao=None))
+        with pytest.raises(IntegrityError):
+            db.session.commit()
+
 
 class TestContatoOng:
 
@@ -91,6 +103,11 @@ class TestContatoOng:
         assert isinstance(c.id, uuid.UUID)
         assert c.ong.nome == "ONG Teste"
         assert len(ong.contatos) == 1
+
+    def test_ong_obrigatoria(self, db):
+        db.session.add(ContatoOng(tipo_contato="Email", valor="x@y.com", id_ong=None))
+        with pytest.raises(IntegrityError):
+            db.session.commit()
 
 
 class TestCampanha:
@@ -121,6 +138,11 @@ class TestCampanha:
         assert c.data_inicio == date(2026, 1, 1)
         assert c.ong.nome == "ONG Teste"
 
+    def test_ong_obrigatoria(self, db):
+        db.session.add(Campanha(titulo="Sem ONG", id_ong=None))
+        with pytest.raises(IntegrityError):
+            db.session.commit()
+
 
 class TestNoticia:
 
@@ -139,6 +161,18 @@ class TestNoticia:
         db.session.commit()
 
         assert n.link == "https://ex.org"
+
+    def test_data_publicacao_gerada_automaticamente(self, db, ong):
+        n = Noticia(titulo="Com Data", id_ong=ong.id)
+        db.session.add(n)
+        db.session.commit()
+
+        assert isinstance(n.data_publicacao, datetime)
+
+    def test_ong_obrigatoria(self, db):
+        db.session.add(Noticia(titulo="Sem ONG", id_ong=None))
+        with pytest.raises(IntegrityError):
+            db.session.commit()
 
 
 class TestUsuario:

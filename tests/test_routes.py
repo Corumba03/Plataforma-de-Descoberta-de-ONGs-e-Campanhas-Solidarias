@@ -5,6 +5,7 @@ from datetime import date, datetime
 from unittest.mock import MagicMock, patch
 
 from werkzeug.exceptions import NotFound
+from werkzeug.security import check_password_hash
 
 from app.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong, Usuario
 
@@ -249,6 +250,19 @@ class TestSearchApis:
         assert payload[0]["campanhas"][0]["data_inicio"] == "2026-01-10"
         assert payload[0]["noticias"][0]["link"] == "https://ex.org/noticia"
 
+    @patch("app.main.routes.Ong.query")
+    def test_api_ongs_falha_interna_retorna_contrato_de_erro(self, mock_ong_query, client):
+        mock_ong_query.filter.side_effect = Exception("falha de banco")
+
+        r = client.get("/api/ongs?q=Alpha")
+
+        assert r.status_code == 500
+        assert r.is_json
+        payload = r.get_json()
+        assert payload["error"]["code"] == "internal_error"
+        assert payload["error"]["message"] == "erro interno ao buscar ongs"
+        assert payload["error"]["details"] is None
+
     @patch("app.main.routes.Campanha.query")
     def test_api_campanhas_retorna_lista_vazia(self, mock_camp_query, client):
         mock_camp_query.join.return_value.filter.return_value.all.return_value = []
@@ -281,6 +295,19 @@ class TestSearchApis:
         assert payload[0]["status"] == "ativa"
         assert payload[0]["data_inicio"] == "2026-02-01"
         assert payload[0]["ong"]["nome"] == "ONG Beta"
+
+    @patch("app.main.routes.Campanha.query")
+    def test_api_campanhas_falha_interna_retorna_contrato_de_erro(self, mock_camp_query, client):
+        mock_camp_query.join.side_effect = Exception("falha de banco")
+
+        r = client.get("/api/campaigns?q=Beta")
+
+        assert r.status_code == 500
+        assert r.is_json
+        payload = r.get_json()
+        assert payload["error"]["code"] == "internal_error"
+        assert payload["error"]["message"] == "erro interno ao buscar campanhas"
+        assert payload["error"]["details"] is None
 
 class TestOngProfile:
 
@@ -404,6 +431,32 @@ class TestAuth:
         with client.session_transaction() as sess:
             assert "user_id" in sess
             assert sess["tipo"] == "organizador"
+
+    def test_register_post_sucesso_persiste_usuario_real(self, client, db):
+        email = "persistencia@teste.org"
+
+        r = client.post(
+            "/auth/register",
+            data={
+                "nome": "Pessoa Real",
+                "email": email,
+                "senha": "segredo-real",
+                "tipo": "usuario",
+            },
+        )
+
+        assert r.status_code == 302
+        assert r.headers["Location"].endswith("/home")
+
+        user = db.session.query(Usuario).filter_by(email=email).first()
+        assert user is not None
+        assert user.nome == "Pessoa Real"
+        assert user.senha_hash != "segredo-real"
+        assert check_password_hash(user.senha_hash, "segredo-real")
+
+        with client.session_transaction() as sess:
+            assert sess["user_id"] == str(user.id)
+            assert sess["tipo"] == "usuario"
 
     @patch("app.main.routes.check_password_hash")
     @patch("app.main.routes.Usuario.query")
@@ -550,6 +603,11 @@ class TestUpdateApis:
         )
 
         assert r.status_code == 404
+        assert r.is_json
+        payload = r.get_json()
+        assert payload["error"]["code"] == "not_found"
+        assert payload["error"]["message"] == "recurso não encontrado"
+        assert payload["error"]["details"] is None
         mock_commit.assert_not_called()
 
     @patch("app.main.routes.db.session.commit")
@@ -562,7 +620,10 @@ class TestUpdateApis:
 
         assert r.status_code == 400
         assert r.is_json
-        assert r.get_json()["message"] == "payload JSON inválido"
+        payload = r.get_json()
+        assert payload["error"]["code"] == "invalid_payload"
+        assert payload["error"]["message"] == "payload JSON inválido"
+        assert payload["error"]["details"] is None
         mock_commit.assert_not_called()
 
     @patch("app.main.routes.db.get_or_404")
@@ -619,6 +680,11 @@ class TestUpdateApis:
         )
 
         assert r.status_code == 404
+        assert r.is_json
+        payload = r.get_json()
+        assert payload["error"]["code"] == "not_found"
+        assert payload["error"]["message"] == "recurso não encontrado"
+        assert payload["error"]["details"] is None
         mock_commit.assert_not_called()
 
     @patch("app.main.routes.db.session.commit")
@@ -631,7 +697,10 @@ class TestUpdateApis:
 
         assert r.status_code == 400
         assert r.is_json
-        assert r.get_json()["message"] == "payload JSON inválido"
+        payload = r.get_json()
+        assert payload["error"]["code"] == "invalid_payload"
+        assert payload["error"]["message"] == "payload JSON inválido"
+        assert payload["error"]["details"] is None
         mock_commit.assert_not_called()
 
 class TestRotaInexistente:
