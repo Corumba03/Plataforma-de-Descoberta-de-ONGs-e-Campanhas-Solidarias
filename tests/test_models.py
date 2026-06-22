@@ -6,7 +6,7 @@ from datetime import date
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong
+from app.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong, Usuario, InteresseVoluntariado
 
 
 @pytest.fixture()
@@ -139,3 +139,32 @@ class TestNoticia:
         db.session.commit()
 
         assert n.link == "https://ex.org"
+
+
+class TestUsuario:
+
+    def test_criar_usuario(self, db):
+        u = Usuario(nome="João", email="joao@test.com", senha_hash="1234", tipo="voluntario")
+        db.session.add(u)
+        db.session.commit()
+
+        assert isinstance(u.id, uuid.UUID)
+        assert u.nome == "João"
+        assert u.tipo == "voluntario"
+
+
+class TestInteresseVoluntariado:
+
+    def test_criar_interesse(self, db, ong):
+        u = Usuario(nome="Voluntário 1", email="vol@test.com", senha_hash="abc", tipo="voluntario")
+        db.session.add(u)
+        db.session.flush()
+
+        i = InteresseVoluntariado(id_usuario=u.id, id_ong=ong.id, mensagem="Quero ajudar")
+        db.session.add(i)
+        db.session.commit()
+
+        assert isinstance(i.id, uuid.UUID)
+        assert i.mensagem == "Quero ajudar"
+        assert i.usuario.nome == "Voluntário 1"
+        assert i.ong.nome == "ONG Teste"

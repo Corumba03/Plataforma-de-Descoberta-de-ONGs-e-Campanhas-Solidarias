@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Interesses Recebidos | {{ ong.nome }} | Plataforma Solidária{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 2rem;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('main.ong_profile', ong_id=ong.id) }}" style="color: var(--accent); text-decoration: none; font-weight: 500;">
+      &larr; Voltar ao perfil da ONG
+    </a>
+  </div>
+
+  <h2>Mensagens de Interesse Recebidas</h2>
+  <p>Estes são os voluntários interessados em apoiar a ONG <strong>{{ ong.nome }}</strong>.</p>
+
+  {% if interesses %}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.5rem;">
+      {% for interesse in interesses %}
+        <div style="background-color: var(--panel); border: 1px solid #ece6db; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #ece6db; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            <div>
+              <h3 style="margin: 0; color: var(--ink);">{{ interesse.usuario.nome }}</h3>
+              <p style="margin: 0.2rem 0 0; color: #666; font-size: 0.9rem;">
+                E-mail de contato: 
+                <a href="mailto:{{ interesse.usuario.email }}" style="color: var(--accent);">
+                  {{ interesse.usuario.email }}
+                </a>
+              </p>
+            </div>
+            <span style="color: #666; font-size: 0.85rem;">
+              Recebido em: {{ interesse.data_envio.strftime('%d/%m/%Y às %H:%M') if interesse.data_envio else '' }}
+            </span>
+          </div>
+          <p style="margin: 0; line-height: 1.5; color: #444; white-space: pre-wrap;">{{ interesse.mensagem }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="background-color: var(--panel); border: 1px solid #ece6db; border-radius: 8px; padding: 2rem; text-align: center; margin-top: 1.5rem;">
+      <p style="margin: 0; color: #666;">Nenhum voluntário demonstrou interesse nesta ONG ainda.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

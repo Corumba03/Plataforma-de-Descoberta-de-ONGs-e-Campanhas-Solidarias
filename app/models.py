@@ -29,6 +29,7 @@ class Ong(db.Model):
     contatos: Mapped[List["ContatoOng"]] = relationship(back_populates="ong")
     campanhas: Mapped[List["Campanha"]] = relationship(back_populates="ong")
     noticias: Mapped[List["Noticia"]] = relationship(back_populates="ong")
+    interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="ong")
 
 class ContatoOng(db.Model):
     __tablename__ = 'contato_ong'
@@ -72,3 +73,17 @@ class Usuario(db.Model):
     email: Mapped[str] = mapped_column(String(255), unique=True)
     senha_hash: Mapped[str] = mapped_column(String(255))
     tipo: Mapped[str] = mapped_column(String(20), nullable=False)
+
+    interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="usuario")
+
+class InteresseVoluntariado(db.Model):
+    __tablename__ = 'interesse_voluntariado'
+    
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id_usuario: Mapped[uuid.UUID] = mapped_column(ForeignKey('usuario.id'), nullable=False)
+    id_ong: Mapped[uuid.UUID] = mapped_column(ForeignKey('ong.id'), nullable=False)
+    mensagem: Mapped[str] = mapped_column(Text, nullable=False)
+    data_envio: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=func.current_timestamp())
+
+    usuario: Mapped["Usuario"] = relationship(back_populates="interesses")
+    ong: Mapped["Ong"] = relationship(back_populates="interesses")

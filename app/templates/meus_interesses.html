@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Interesses | Plataforma Solidária{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 2rem;">
+  <h2>Minhas Manifestações de Interesse</h2>
+  <p>Aqui você pode ver o histórico de todas as mensagens de interesse que enviou para as ONGs.</p>
+
+  {% if interesses %}
+    <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem;">
+      {% for interesse in interesses %}
+        <div style="background-color: var(--panel); border: 1px solid #ece6db; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ece6db; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            <h3 style="margin: 0;">
+              <a href="{{ url_for('main.ong_profile', ong_id=interesse.ong.id) }}" style="color: var(--accent); text-decoration: none;">
+                {{ interesse.ong.nome }}
+              </a>
+            </h3>
+            <span style="color: #666; font-size: 0.85rem;">
+              Enviado em: {{ interesse.data_envio.strftime('%d/%m/%Y às %H:%M') if interesse.data_envio else '' }}
+            </span>
+          </div>
+          <p style="margin: 0; font-style: italic; line-height: 1.5; color: #444;">
+            "{{ interesse.mensagem }}"
+          </p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="background-color: var(--panel); border: 1px solid #ece6db; border-radius: 8px; padding: 2rem; text-align: center; margin-top: 1.5rem;">
+      <p style="margin: 0; color: #666;">Você ainda não demonstrou interesse em nenhuma ONG. Visite os perfis das ONGs para começar!</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -26,6 +26,17 @@
     {% endblock %}
 
     <main class="{% block main_class %}container{% endblock %}">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flashes" style="margin-top: 1rem;">
+            {% for category, message in messages %}
+              <div class="flash-{{ category }}" style="padding: 10px; border-radius: 4px; margin-bottom: 10px; font-weight: bold; background-color: {% if category == 'success' %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if category == 'success' %}#155724{% else %}#721c24{% endif %};">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
       {% block content %}{% endblock %}
     </main>
 
