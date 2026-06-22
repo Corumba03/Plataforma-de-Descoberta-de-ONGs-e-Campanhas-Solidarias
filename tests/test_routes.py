@@ -140,14 +140,14 @@ class TestRotaInexistente:
 
 class TestInteresseRoutes:
 
-    @patch("app.main.routes.db.session")
-    def test_demonstrar_interesse_deslogado(self, mock_session, client):
+    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    def test_demonstrar_interesse_deslogado(self, mock_repo, client):
         r = client.post(f"/ong/{uuid.uuid4()}/interesse", data={"mensagem": "Quero ajudar"}, follow_redirects=True)
         assert "/auth/login" in r.request.path
         assert "Você precisa estar logado" in r.get_data(as_text=True)
 
-    @patch("app.main.routes.db.session")
-    def test_demonstrar_interesse_como_organizador(self, mock_session, client):
+    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    def test_demonstrar_interesse_como_organizador(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
             sess["tipo"] = "organizador"
@@ -159,8 +159,8 @@ class TestInteresseRoutes:
             assert f"/ong/{ong_id}" in r.request.path
             assert "Organizadores não podem se voluntariar" in r.get_data(as_text=True)
 
-    @patch("app.main.routes.db.session")
-    def test_demonstrar_interesse_mensagem_vazia(self, mock_session, client):
+    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    def test_demonstrar_interesse_mensagem_vazia(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
             sess["tipo"] = "voluntario"
@@ -172,33 +172,34 @@ class TestInteresseRoutes:
             assert f"/ong/{ong_id}" in r.request.path
             assert "A mensagem de interesse não pode estar vazia" in r.get_data(as_text=True)
 
-    @patch("app.main.routes.db.session")
-    def test_demonstrar_interesse_sucesso(self, mock_session, client):
+    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    def test_demonstrar_interesse_sucesso(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
             sess["tipo"] = "voluntario"
 
+        mock_instance = mock_repo.return_value
         ong_id = uuid.uuid4()
         with patch("app.main.routes.db.get_or_404") as mock_get:
             mock_get.return_value = MagicMock(spec=Ong)
             r = client.post(f"/ong/{ong_id}/interesse", data={"mensagem": "Quero ajudar"}, follow_redirects=True)
             assert f"/ong/{ong_id}" in r.request.path
             assert "Interesse demonstrado com sucesso" in r.get_data(as_text=True)
-            mock_session.add.assert_called_once()
-            mock_session.commit.assert_called_once()
+            mock_instance.add.assert_called_once()
 
     def test_meus_interesses_deslogado(self, client):
         r = client.get("/meus-interesses")
         assert r.status_code == 302
         assert "/auth/login" in r.location
 
-    @patch("app.main.routes.InteresseVoluntariado.query")
-    def test_meus_interesses_sucesso(self, mock_query, client):
+    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    def test_meus_interesses_sucesso(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
             sess["tipo"] = "voluntario"
 
-        mock_query.filter_by.return_value.order_by.return_value.all.return_value = []
+        mock_instance = mock_repo.return_value
+        mock_instance.get_by_usuario.return_value = []
 
         r = client.get("/meus-interesses")
         assert r.status_code == 200
@@ -216,8 +217,8 @@ class TestInteresseRoutes:
         assert r.status_code == 403
 
     @patch("app.main.routes.db.get_or_404")
-    @patch("app.main.routes.InteresseVoluntariado.query")
-    def test_interesses_recebidos_como_organizador(self, mock_query, mock_get, client):
+    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    def test_interesses_recebidos_como_organizador(self, mock_repo, mock_get, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
             sess["tipo"] = "organizador"
@@ -227,10 +228,12 @@ class TestInteresseRoutes:
         ong.nome = "ONG Teste"
         mock_get.return_value = ong
 
-        mock_query.filter_by.return_value.order_by.return_value.all.return_value = []
+        mock_instance = mock_repo.return_value
+        mock_instance.get_by_ong.return_value = []
 
         r = client.get(f"/ong/{ong.id}/interesses")
         assert r.status_code == 200
-        mock_query.filter_by.assert_called_once_with(id_ong=ong.id)
+        mock_instance.get_by_ong.assert_called_once_with(ong.id)
+
 
 

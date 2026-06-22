@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.main import main_bp
 from app.models import db, Ong, Campanha, AreaAtuacao, Usuario, InteresseVoluntariado
+from app.repositories import InteresseVoluntariadoRepository
 from tests.test_models import ong
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -283,9 +284,8 @@ def demonstrar_interesse(ong_id):
 
     user_id = UUID(session["user_id"])
     
-    interesse = InteresseVoluntariado(id_usuario=user_id, id_ong=ong_id, mensagem=mensagem)
-    db.session.add(interesse)
-    db.session.commit()
+    repo = InteresseVoluntariadoRepository()
+    repo.add(id_usuario=user_id, id_ong=ong_id, mensagem=mensagem)
 
     flash("Interesse demonstrado com sucesso!", "success")
     return redirect(url_for("main.ong_profile", ong_id=ong_id))
@@ -297,12 +297,8 @@ def meus_interesses():
         return redirect(url_for("main.login"))
 
     user_id = UUID(session["user_id"])
-    interesses = (
-        InteresseVoluntariado.query
-        .filter_by(id_usuario=user_id)
-        .order_by(InteresseVoluntariado.data_envio.desc())
-        .all()
-    )
+    repo = InteresseVoluntariadoRepository()
+    interesses = repo.get_by_usuario(user_id)
 
     return render_template("meus_interesses.html", interesses=interesses)
 
@@ -316,11 +312,7 @@ def interesses_recebidos(ong_id):
         return "Acesso negado", 403
 
     ong = db.get_or_404(Ong, ong_id)
-    interesses = (
-        InteresseVoluntariado.query
-        .filter_by(id_ong=ong_id)
-        .order_by(InteresseVoluntariado.data_envio.desc())
-        .all()
-    )
+    repo = InteresseVoluntariadoRepository()
+    interesses = repo.get_by_ong(ong_id)
 
     return render_template("interesses_recebidos.html", interesses=interesses, ong=ong)
