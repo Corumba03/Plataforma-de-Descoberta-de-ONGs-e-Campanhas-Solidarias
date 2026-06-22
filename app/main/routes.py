@@ -4,7 +4,12 @@ from uuid import UUID
 from app.main import main_bp
 from app.models import db, Ong, Campanha, AreaAtuacao, Usuario
 from tests.test_models import ong
+from werkzeug.exceptions import NotFound
 from werkzeug.security import generate_password_hash, check_password_hash
+
+
+def _api_error(message, code, status, details=None):
+    return jsonify({"error": {"code": code, "message": message, "details": details}}), status
 
 
 @main_bp.get("/")
@@ -64,9 +69,12 @@ def campanha_detail(campanha_id):
 def search_campanhas():
     termo = request.args.get("q", "")
 
-    campanhas = Campanha.query.join(Ong).filter(
-        Campanha.titulo.ilike(f"%{termo}%")
-    ).all()
+    try:
+        campanhas = Campanha.query.join(Ong).filter(
+            Campanha.titulo.ilike(f"%{termo}%")
+        ).all()
+    except Exception:
+        return _api_error("erro interno ao buscar campanhas", "internal_error", 500)
 
     return jsonify([
         {
@@ -95,9 +103,12 @@ def ong_profile(ong_id):
 def search_ongs():
     termo = request.args.get("q", "")
 
-    ongs = Ong.query.filter(
-        Ong.nome.ilike(f"%{termo}%")
-    ).all()
+    try:
+        ongs = Ong.query.filter(
+            Ong.nome.ilike(f"%{termo}%")
+        ).all()
+    except Exception:
+        return _api_error("erro interno ao buscar ongs", "internal_error", 500)
 
     return jsonify([
         {
@@ -161,7 +172,7 @@ def register():
         db.session.commit()
 
         # 🔐 cria sessão automaticamente (login automático)
-        session["user_id"] = user.id
+        session["user_id"] = str(user.id)
         session["tipo"] = user.tipo
 
         return redirect("/home")
@@ -205,9 +216,14 @@ def logout():
 
 @main_bp.put("/api/ongs/<uuid:ong_id>")
 def update_ong(ong_id):
-    ong = db.get_or_404(Ong, ong_id)
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return _api_error("payload JSON inválido", "invalid_payload", 400)
 
-    data = request.get_json()
+    try:
+        ong = db.get_or_404(Ong, ong_id)
+    except NotFound:
+        return _api_error("recurso não encontrado", "not_found", 404)
 
     ong.nome = data.get("nome", ong.nome)
     ong.descricao = data.get("descricao", ong.descricao)
@@ -220,9 +236,14 @@ def update_ong(ong_id):
 
 @main_bp.put("/api/users/<uuid:user_id>")
 def update_user(user_id):
-    user = db.get_or_404(Usuario, user_id)
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return _api_error("payload JSON inválido", "invalid_payload", 400)
 
-    data = request.get_json()
+    try:
+        user = db.get_or_404(Usuario, user_id)
+    except NotFound:
+        return _api_error("recurso não encontrado", "not_found", 404)
 
     user.nome = data.get("nome", user.nome)
     user.email = data.get("email", user.email)

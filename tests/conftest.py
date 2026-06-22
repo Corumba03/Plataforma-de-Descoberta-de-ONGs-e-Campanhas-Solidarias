@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 import pytest
+from sqlalchemy import text
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
@@ -28,8 +29,8 @@ def app():
 @pytest.fixture()
 def client(app):
     """Cliente de teste do Flask para simular requisições HTTP."""
-    with app.test_client() as client:
-        with app.app_context():
+    with app.app_context():
+        with app.test_client() as client:
             yield client
 
 
@@ -37,7 +38,8 @@ def client(app):
 def db(app):
     """Cria as tabelas em memória antes do teste e limpa depois."""
     with app.app_context():
+        _db.session.execute(text("PRAGMA foreign_keys=ON"))
         _db.create_all()
         yield _db
-        _db.session.rollback()
+        _db.session.remove()
         _db.drop_all()
