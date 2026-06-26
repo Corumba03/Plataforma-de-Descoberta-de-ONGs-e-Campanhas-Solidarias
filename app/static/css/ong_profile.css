@@ -91,3 +91,33 @@ ul.ong-meta li, ul.ong-contacts li, .ong-sidebar ul li {
   text-decoration: underline;
   color: #007bff;
 }
+
+.btn-primary {
+  background-color: var(--accent, #1d7f5f);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #166149;
+}
+
+.interest-form textarea {
+  border: 1px solid #ece6db;
+  border-radius: 4px;
+  background-color: var(--panel, #fffdf8);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.interest-form textarea:focus {
+  outline: none;
+  border-color: var(--accent, #1d7f5f);
+}

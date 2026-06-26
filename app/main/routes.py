@@ -1,8 +1,9 @@
-from flask import request, render_template, session, redirect, url_for, jsonify
+from flask import request, render_template, session, redirect, url_for, jsonify, flash
 from uuid import UUID
 
 from app.main import main_bp
-from app.models import db, Ong, Campanha, AreaAtuacao, Usuario
+from app.models import db, Ong, Campanha, AreaAtuacao, Usuario, InteresseVoluntariado
+from app.repositories import InteresseVoluntariadoRepository
 from tests.test_models import ong
 from werkzeug.exceptions import NotFound
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -285,3 +286,54 @@ def edit_ong_page(ong_id):
         return "Acesso negado", 403
 
     return render_template("edit_ong.html", ong=ong)
+
+
+@main_bp.post("/ong/<uuid:ong_id>/interesse")
+def demonstrar_interesse(ong_id):
+    if "user_id" not in session:
+        flash("Você precisa estar logado para demonstrar interesse.", "danger")
+        return redirect(url_for("main.login"))
+    
+    if session.get("tipo") == "organizador":
+        flash("Organizadores não podem se voluntariar.", "danger")
+        return redirect(url_for("main.ong_profile", ong_id=ong_id))
+
+    mensagem = request.form.get("mensagem", "").strip()
+    if not mensagem:
+        flash("A mensagem de interesse não pode estar vazia.", "danger")
+        return redirect(url_for("main.ong_profile", ong_id=ong_id))
+
+    user_id = UUID(session["user_id"])
+    
+    repo = InteresseVoluntariadoRepository()
+    repo.add(id_usuario=user_id, id_ong=ong_id, mensagem=mensagem)
+
+    flash("Interesse demonstrado com sucesso!", "success")
+    return redirect(url_for("main.ong_profile", ong_id=ong_id))
+
+
+@main_bp.get("/meus-interesses")
+def meus_interesses():
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    user_id = UUID(session["user_id"])
+    repo = InteresseVoluntariadoRepository()
+    interesses = repo.get_by_usuario(user_id)
+
+    return render_template("meus_interesses.html", interesses=interesses)
+
+
+@main_bp.get("/ong/<uuid:ong_id>/interesses")
+def interesses_recebidos(ong_id):
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    if session.get("tipo") != "organizador":
+        return "Acesso negado", 403
+
+    ong = db.get_or_404(Ong, ong_id)
+    repo = InteresseVoluntariadoRepository()
+    interesses = repo.get_by_ong(ong_id)
+
+    return render_template("interesses_recebidos.html", interesses=interesses, ong=ong)

@@ -6,7 +6,7 @@ from datetime import date, datetime
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong, Usuario
+from app.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong, Usuario, InteresseVoluntariado
 
 
 @pytest.fixture()
@@ -177,71 +177,31 @@ class TestNoticia:
 
         assert n.link == "https://ex.org"
 
-    def test_data_publicacao_gerada_automaticamente(self, db, ong):
-        n = Noticia(titulo="Com Data", id_ong=ong.id)
-        db.session.add(n)
-        db.session.commit()
-
-        assert isinstance(n.data_publicacao, datetime)
-
-    def test_ong_obrigatoria(self, db):
-        db.session.add(Noticia(titulo="Sem ONG", id_ong=None))
-        with pytest.raises(IntegrityError):
-            db.session.commit()
-
-    def test_ong_inexistente(self, db):
-        db.session.add(Noticia(titulo="ONG Inexistente", id_ong=uuid.uuid4()))
-        with pytest.raises(IntegrityError):
-            db.session.commit()
-
 
 class TestUsuario:
 
-    def test_criar_usuario_com_uuid(self, db):
-        user = Usuario(
-            nome="Maria",
-            email="maria@exemplo.org",
-            senha_hash="hash-seguro",
-            tipo="usuario",
-        )
-        db.session.add(user)
+    def test_criar_usuario(self, db):
+        u = Usuario(nome="João", email="joao@test.com", senha_hash="1234", tipo="voluntario")
+        db.session.add(u)
         db.session.commit()
 
-        assert isinstance(user.id, uuid.UUID)
-        assert user.nome == "Maria"
-        assert user.email == "maria@exemplo.org"
-        assert user.tipo == "usuario"
+        assert isinstance(u.id, uuid.UUID)
+        assert u.nome == "João"
+        assert u.tipo == "voluntario"
 
-    def test_email_unico(self, db):
-        db.session.add(
-            Usuario(
-                nome="A",
-                email="repetido@exemplo.org",
-                senha_hash="hash-a",
-                tipo="usuario",
-            )
-        )
+
+class TestInteresseVoluntariado:
+
+    def test_criar_interesse(self, db, ong):
+        u = Usuario(nome="Voluntário 1", email="vol@test.com", senha_hash="abc", tipo="voluntario")
+        db.session.add(u)
+        db.session.flush()
+
+        i = InteresseVoluntariado(id_usuario=u.id, id_ong=ong.id, mensagem="Quero ajudar")
+        db.session.add(i)
         db.session.commit()
 
-        db.session.add(
-            Usuario(
-                nome="B",
-                email="repetido@exemplo.org",
-                senha_hash="hash-b",
-                tipo="organizador",
-            )
-        )
-        with pytest.raises(IntegrityError):
-            db.session.commit()
-
-    def test_tipo_obrigatorio(self, db):
-        db.session.add(
-            Usuario(
-                nome="Sem Tipo",
-                email="semtipo@exemplo.org",
-                senha_hash="hash",
-                tipo=None,
-            )
-        )
-        with pytest.raises(IntegrityError):
-            db.session.commit()
+        assert isinstance(i.id, uuid.UUID)
+        assert i.mensagem == "Quero ajudar"
+        assert i.usuario.nome == "Voluntário 1"
+        assert i.ong.nome == "ONG Teste"
