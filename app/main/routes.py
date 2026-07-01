@@ -12,6 +12,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 def _api_error(message, code, status, details=None):
     return jsonify({"error": {"code": code, "message": message, "details": details}}), status
 
+def _get_validated_entity(model_class, entity_id, data):
+    if not isinstance(data, dict):
+        return None, _api_error("payload JSON inválido", "invalid_payload", 400)
+
+    try:
+        entity = db.get_or_404(model_class, entity_id)
+        return entity, None
+    except NotFound:
+        return None, _api_error("recurso não encontrado", "not_found", 404)
+
 
 @main_bp.get("/")
 def index():
@@ -218,13 +228,10 @@ def logout():
 @main_bp.put("/api/ongs/<uuid:ong_id>")
 def update_ong(ong_id):
     data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        return _api_error("payload JSON inválido", "invalid_payload", 400)
-
-    try:
-        ong = db.get_or_404(Ong, ong_id)
-    except NotFound:
-        return _api_error("recurso não encontrado", "not_found", 404)
+    
+    ong, error_response = _get_validated_entity(Ong, ong_id, data)
+    if error_response:
+        return error_response
 
     ong.nome = data.get("nome", ong.nome)
     ong.descricao = data.get("descricao", ong.descricao)
@@ -238,13 +245,10 @@ def update_ong(ong_id):
 @main_bp.put("/api/users/<uuid:user_id>")
 def update_user(user_id):
     data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        return _api_error("payload JSON inválido", "invalid_payload", 400)
-
-    try:
-        user = db.get_or_404(Usuario, user_id)
-    except NotFound:
-        return _api_error("recurso não encontrado", "not_found", 404)
+    
+    user, error_response = _get_validated_entity(Usuario, user_id, data)
+    if error_response:
+        return error_response
 
     user.nome = data.get("nome", user.nome)
     user.email = data.get("email", user.email)
@@ -254,10 +258,9 @@ def update_user(user_id):
 
     db.session.commit()
 
-    session["user_nome"] = user.nome  # Atualiza o nome na sessão para refletir a mudança
+    session["user_nome"] = user.nome
 
     return jsonify({"message": "Usuário atualizado com sucesso"}), 200
-
 
 @main_bp.get("/edit/user")
 def edit_user_page():
