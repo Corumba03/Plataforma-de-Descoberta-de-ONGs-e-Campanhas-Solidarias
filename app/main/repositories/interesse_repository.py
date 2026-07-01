@@ -1,15 +1,10 @@
-from app.models import db, InteresseVoluntariado
+from app.main.models import db, InteresseVoluntariado
 import uuid
 from typing import List
 
 
 class InteresseVoluntariadoRepository:
-    """Repository class encapsulating database query actions for InteresseVoluntariado.
-    Implements the Repository Design Pattern for Parte 2 of the evaluation.
-    """
-
     def add(self, id_usuario: uuid.UUID, id_ong: uuid.UUID, mensagem: str) -> InteresseVoluntariado:
-        """Registers a new volunteer interest."""
         interesse = InteresseVoluntariado(
             id_usuario=id_usuario,
             id_ong=id_ong,
@@ -20,7 +15,6 @@ class InteresseVoluntariadoRepository:
         return interesse
 
     def get_by_ong(self, id_ong: uuid.UUID) -> List[InteresseVoluntariado]:
-        """Retrieves all volunteer interests received by a specific NGO, ordered by date."""
         return (
             InteresseVoluntariado.query
             .filter_by(id_ong=id_ong)
@@ -29,7 +23,6 @@ class InteresseVoluntariadoRepository:
         )
 
     def get_by_usuario(self, id_usuario: uuid.UUID) -> List[InteresseVoluntariado]:
-        """Retrieves all volunteer interests submitted by a specific user, ordered by date."""
         return (
             InteresseVoluntariado.query
             .filter_by(id_usuario=id_usuario)

@@ -1,7 +1,7 @@
 """Popula o banco de dados com dados iniciais para desenvolvimento."""
 
 from app import create_app
-from app.models import db, AreaAtuacao, Ong, ContatoOng, Campanha, Noticia
+from app.main.models import db, AreaAtuacao, Ong, ContatoOng, Campanha, Noticia
 from datetime import date, datetime
 
 

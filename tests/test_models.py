@@ -6,7 +6,7 @@ from datetime import date, datetime
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong, Usuario, InteresseVoluntariado
+from app.main.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong, Usuario, InteresseVoluntariado
 
 
 @pytest.fixture()

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 from werkzeug.exceptions import NotFound
 from werkzeug.security import check_password_hash
 
-from app.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong, Usuario
+from app.main.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong, Usuario
 
 
 def _mock_ong(**kwargs):
@@ -24,6 +24,16 @@ def _mock_ong(**kwargs):
     ong.contatos = kwargs.pop("contatos", [])
     ong.campanhas = kwargs.pop("campanhas", [])
     ong.noticias = kwargs.pop("noticias", [])
+    ong.to_dict = lambda: {
+        "id": str(ong.id),
+        "nome": ong.nome,
+        "descricao": ong.descricao,
+        "cnpj": ong.cnpj,
+        "area_atuacao": ong.area_atuacao.nome_area if ong.area_atuacao else None,
+        "contatos": [c.to_dict() for c in ong.contatos],
+        "campanhas": [c.to_dict() for c in ong.campanhas],
+        "noticias": [n.to_dict() for n in ong.noticias]
+    }
     return ong
 
 
@@ -31,6 +41,8 @@ def _mock_contato(**kw):
     c = MagicMock(spec=ContatoOng)
     c.tipo_contato = kw.get("tipo", "Email")
     c.valor = kw.get("valor", "contato@ong.org")
+    c.id = kw.get("id", uuid.uuid4())
+    c.to_dict = lambda: {"id": str(c.id), "tipo": c.tipo_contato, "valor": c.valor}
     return c
 
 
@@ -38,6 +50,24 @@ def _mock_campanha(**kw):
     c = MagicMock(spec=Campanha)
     c.titulo = kw.get("titulo", "Campanha")
     c.status = kw.get("status", "ativa")
+    c.id = kw.get("id", uuid.uuid4())
+    c.data_inicio = kw.get("data_inicio", date(2026, 2, 1))
+    c.data_fim = kw.get("data_fim", None)
+    c.descricao = kw.get("descricao", "Descrição")
+    c.ong = kw.get("ong", None)
+    def to_dict(include_ong=False):
+        d = {
+            "id": str(c.id),
+            "titulo": c.titulo,
+            "descricao": c.descricao,
+            "status": c.status,
+            "data_inicio": c.data_inicio.isoformat() if c.data_inicio else None,
+            "data_fim": c.data_fim.isoformat() if c.data_fim else None,
+        }
+        if include_ong and c.ong:
+            d["ong"] = {"id": str(c.ong.id), "nome": c.ong.nome}
+        return d
+    c.to_dict = to_dict
     return c
 
 
@@ -46,6 +76,13 @@ def _mock_noticia(**kw):
     n.titulo = kw.get("titulo", "Notícia")
     n.link = kw.get("link", None)
     n.data_publicacao = kw.get("data", datetime(2026, 4, 1))
+    n.id = kw.get("id", uuid.uuid4())
+    n.to_dict = lambda: {
+        "id": str(n.id),
+        "titulo": n.titulo,
+        "data_publicacao": n.data_publicacao.isoformat() if n.data_publicacao else None,
+        "link": n.link
+    }
     return n
 
 
@@ -72,9 +109,9 @@ class TestIndex:
 
 class TestHome:
 
-    @patch("app.main.routes.Campanha.query")
-    @patch("app.main.routes.Ong.query")
-    @patch("app.main.routes.AreaAtuacao.query")
+    @patch("app.main.models.Campanha.query")
+    @patch("app.main.models.Ong.query")
+    @patch("app.main.models.AreaAtuacao.query")
     def test_retorna_home_com_estado_vazio(self, mock_area_query, mock_ong_query, mock_camp_query, client):
         mock_area_query.all.return_value = []
         mock_ong_query.count.return_value = 0
@@ -86,9 +123,9 @@ class TestHome:
         assert b"Conecte-se a <em>causas que transformam</em> comunidades" in r.data
         assert b"Nenhuma campanha ativa no momento." in r.data
 
-    @patch("app.main.routes.Campanha.query")
-    @patch("app.main.routes.Ong.query")
-    @patch("app.main.routes.AreaAtuacao.query")
+    @patch("app.main.models.Campanha.query")
+    @patch("app.main.models.Ong.query")
+    @patch("app.main.models.AreaAtuacao.query")
     def test_retorna_home_com_campanhas_por_area(self, mock_area_query, mock_ong_query, mock_camp_query, client):
         area = MagicMock(spec=AreaAtuacao)
         area.id = uuid.uuid4()
@@ -113,9 +150,9 @@ class TestHome:
         assert b"ONGs cadastradas" in r.data
         assert b"Campanhas ativas" in r.data
 
-    @patch("app.main.routes.Campanha.query")
-    @patch("app.main.routes.Ong.query")
-    @patch("app.main.routes.AreaAtuacao.query")
+    @patch("app.main.models.Campanha.query")
+    @patch("app.main.models.Ong.query")
+    @patch("app.main.models.AreaAtuacao.query")
     def test_home_usuario_organizador_exibe_botoes_gestao(
         self, mock_area_query, mock_ong_query, mock_camp_query, client
     ):
@@ -136,9 +173,9 @@ class TestHome:
         assert b"Gerenciar ONG" in r.data
         assert b"Login" not in r.data
 
-    @patch("app.main.routes.Campanha.query")
-    @patch("app.main.routes.Ong.query")
-    @patch("app.main.routes.AreaAtuacao.query")
+    @patch("app.main.models.Campanha.query")
+    @patch("app.main.models.Ong.query")
+    @patch("app.main.models.AreaAtuacao.query")
     def test_home_usuario_comum_nao_exibe_botao_gerenciar_ong(
         self, mock_area_query, mock_ong_query, mock_camp_query, client
     ):
@@ -174,7 +211,7 @@ class TestSearchPages:
 
 class TestCampaignDetail:
 
-    @patch("app.main.routes.Campanha.query")
+    @patch("app.main.models.Campanha.query")
     def test_campanha_detail_existente(self, mock_camp_query, client):
         ong = _mock_ong(id=uuid.uuid4(), nome="ONG Esperança")
         campanha = _mock_campanha(titulo="Mutirão Solidário", status="ativa")
@@ -193,7 +230,7 @@ class TestCampaignDetail:
         assert b"Descri\xc3\xa7\xc3\xa3o detalhada" in r.data
         assert f"/ong/{ong.id}".encode() in r.data
 
-    @patch("app.main.routes.Campanha.query")
+    @patch("app.main.models.Campanha.query")
     def test_campanha_detail_inexistente(self, mock_camp_query, client):
         mock_camp_query.get_or_404.side_effect = NotFound()
 
@@ -217,7 +254,7 @@ class TestHealth:
 
 class TestSearchApis:
 
-    @patch("app.main.routes.Ong.query")
+    @patch("app.main.models.Ong.query")
     def test_api_ongs_retorna_contrato(self, mock_ong_query, client):
         contato = _mock_contato(tipo="Email", valor="contato@alpha.org")
         campanha = _mock_campanha(titulo="Mutirão", status="ativa")
@@ -250,7 +287,7 @@ class TestSearchApis:
         assert payload[0]["campanhas"][0]["data_inicio"] == "2026-01-10"
         assert payload[0]["noticias"][0]["link"] == "https://ex.org/noticia"
 
-    @patch("app.main.routes.Ong.query")
+    @patch("app.main.models.Ong.query")
     def test_api_ongs_falha_interna_retorna_contrato_de_erro(self, mock_ong_query, client):
         mock_ong_query.filter.side_effect = Exception("falha de banco")
 
@@ -263,7 +300,7 @@ class TestSearchApis:
         assert payload["error"]["message"] == "erro interno ao buscar ongs"
         assert payload["error"]["details"] is None
 
-    @patch("app.main.routes.Campanha.query")
+    @patch("app.main.models.Campanha.query")
     def test_api_campanhas_retorna_lista_vazia(self, mock_camp_query, client):
         mock_camp_query.join.return_value.filter.return_value.all.return_value = []
 
@@ -273,7 +310,7 @@ class TestSearchApis:
         assert r.is_json
         assert r.get_json() == []
 
-    @patch("app.main.routes.Campanha.query")
+    @patch("app.main.models.Campanha.query")
     def test_api_campanhas_retorna_contrato(self, mock_camp_query, client):
         ong = _mock_ong(id=uuid.uuid4(), nome="ONG Beta")
         campanha = _mock_campanha(titulo="Campanha Beta", status="ativa")
@@ -296,7 +333,7 @@ class TestSearchApis:
         assert payload[0]["data_inicio"] == "2026-02-01"
         assert payload[0]["ong"]["nome"] == "ONG Beta"
 
-    @patch("app.main.routes.Campanha.query")
+    @patch("app.main.models.Campanha.query")
     def test_api_campanhas_falha_interna_retorna_contrato_de_erro(self, mock_camp_query, client):
         mock_camp_query.join.side_effect = Exception("falha de banco")
 
@@ -311,7 +348,7 @@ class TestSearchApis:
 
 class TestOngProfile:
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_ong_existente(self, mock_get, client):
         ong = _mock_ong(nome="Alpha", cnpj="99887766000155", area="Meio Ambiente")
         mock_get.return_value = ong
@@ -324,7 +361,7 @@ class TestOngProfile:
         assert b"99887766000155" in r.data
         assert "Meio Ambiente".encode() in r.data
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_ong_inexistente(self, mock_get, client):
         mock_get.side_effect = NotFound()
         r = client.get(f"/ong/{uuid.uuid4()}")
@@ -334,7 +371,7 @@ class TestOngProfile:
         r = client.get("/ong/nao-e-uuid")
         assert r.status_code == 404
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_exibe_contatos(self, mock_get, client):
         ong = _mock_ong(contatos=[_mock_contato(valor="x@y.org")])
         mock_get.return_value = ong
@@ -342,7 +379,7 @@ class TestOngProfile:
         r = client.get(f"/ong/{ong.id}")
         assert b"x@y.org" in r.data
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_sem_contatos(self, mock_get, client):
         mock_get.return_value = _mock_ong(contatos=[])
         ong_id = mock_get.return_value.id
@@ -350,7 +387,7 @@ class TestOngProfile:
         r = client.get(f"/ong/{ong_id}")
         assert "Nenhum contato cadastrado".encode() in r.data
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_exibe_campanhas(self, mock_get, client):
         ong = _mock_ong(campanhas=[_mock_campanha(titulo="Camp Visível")])
         mock_get.return_value = ong
@@ -358,13 +395,13 @@ class TestOngProfile:
         r = client.get(f"/ong/{ong.id}")
         assert "Camp Visível".encode() in r.data
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_sem_campanhas(self, mock_get, client):
         mock_get.return_value = _mock_ong(campanhas=[])
         r = client.get(f"/ong/{mock_get.return_value.id}")
         assert "Nenhuma campanha no momento".encode() in r.data
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_exibe_noticias_com_link(self, mock_get, client):
         n = _mock_noticia(titulo="Nova", link="https://ex.org/n")
         mock_get.return_value = _mock_ong(noticias=[n])
@@ -374,7 +411,7 @@ class TestOngProfile:
         assert b"https://ex.org/n" in r.data
         assert b"<a " in r.data
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_sem_noticias(self, mock_get, client):
         mock_get.return_value = _mock_ong(noticias=[])
         r = client.get(f"/ong/{mock_get.return_value.id}")
@@ -393,7 +430,7 @@ class TestAuth:
         assert r.status_code == 200
         assert b"Criar conta" in r.data
 
-    @patch("app.main.routes.Usuario.query")
+    @patch("app.main.models.Usuario.query")
     def test_register_post_usuario_existente(self, mock_user_query, client):
         mock_user_query.filter_by.return_value.first.return_value = _mock_usuario()
 
@@ -406,9 +443,9 @@ class TestAuth:
         assert "text/html" in r.content_type
         assert "Usuário já existe".encode() in r.data
 
-    @patch("app.main.routes.db.session.commit")
-    @patch("app.main.routes.db.session.add")
-    @patch("app.main.routes.Usuario.query")
+    @patch("app.main.models.db.session.commit")
+    @patch("app.main.models.db.session.add")
+    @patch("app.main.models.Usuario.query")
     def test_register_post_sucesso_cria_sessao_e_redireciona(
         self, mock_user_query, mock_add, mock_commit, client
     ):
@@ -458,8 +495,8 @@ class TestAuth:
             assert sess["user_id"] == str(user.id)
             assert sess["tipo"] == "usuario"
 
-    @patch("app.main.routes.check_password_hash")
-    @patch("app.main.routes.Usuario.query")
+    @patch("app.main.controllers.auth_controller.check_password_hash")
+    @patch("app.main.models.Usuario.query")
     def test_login_post_sucesso_seta_sessao(self, mock_user_query, mock_check_hash, client):
         user = _mock_usuario(id=uuid.uuid4(), nome="Maria", tipo="organizador")
         mock_user_query.filter_by.return_value.first.return_value = user
@@ -474,7 +511,7 @@ class TestAuth:
             assert sess["user_nome"] == "Maria"
             assert sess["tipo"] == "organizador"
 
-    @patch("app.main.routes.Usuario.query")
+    @patch("app.main.models.Usuario.query")
     def test_login_post_credenciais_invalidas(self, mock_user_query, client):
         mock_user_query.filter_by.return_value.first.return_value = None
 
@@ -484,8 +521,8 @@ class TestAuth:
         assert "text/html" in r.content_type
         assert b"Entrar" in r.data
 
-    @patch("app.main.routes.check_password_hash")
-    @patch("app.main.routes.Usuario.query")
+    @patch("app.main.controllers.auth_controller.check_password_hash")
+    @patch("app.main.models.Usuario.query")
     def test_login_post_usuario_existente_senha_invalida(self, mock_user_query, mock_check_hash, client):
         mock_user_query.filter_by.return_value.first.return_value = _mock_usuario()
         mock_check_hash.return_value = False
@@ -524,7 +561,7 @@ class TestEditPages:
         assert r.status_code == 302
         assert "/auth/login" in r.headers["Location"]
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_edit_user_logado_renderiza_pagina(self, mock_get, client):
         user = _mock_usuario(id=uuid.uuid4(), nome="João", email="joao@ex.org", tipo="usuario")
         mock_get.return_value = user
@@ -543,7 +580,7 @@ class TestEditPages:
         assert r.status_code == 302
         assert "/auth/login" in r.headers["Location"]
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_edit_ong_usuario_sem_permissao(self, mock_get, client):
         mock_get.return_value = _mock_ong(id=uuid.uuid4())
         with client.session_transaction() as sess:
@@ -555,7 +592,7 @@ class TestEditPages:
         assert r.status_code == 403
         assert b"Acesso negado" in r.data
 
-    @patch("app.main.routes.db.get_or_404")
+    @patch("app.main.models.db.get_or_404")
     def test_edit_ong_organizador_renderiza_pagina(self, mock_get, client):
         ong = _mock_ong(id=uuid.uuid4(), nome="ONG Edit")
         mock_get.return_value = ong
@@ -572,8 +609,8 @@ class TestEditPages:
 
 class TestUpdateApis:
 
-    @patch("app.main.routes.db.get_or_404")
-    @patch("app.main.routes.db.session.commit")
+    @patch("app.main.models.db.get_or_404")
+    @patch("app.main.models.db.session.commit")
     def test_update_ong_retorna_sucesso(self, mock_commit, mock_get, client):
         ong = _mock_ong(id=uuid.uuid4(), nome="Orig", descricao="D", cnpj="12345678000199")
         mock_get.return_value = ong
@@ -592,8 +629,8 @@ class TestUpdateApis:
         assert ong.cnpj == "99887766000155"
         mock_commit.assert_called_once()
 
-    @patch("app.main.routes.db.get_or_404")
-    @patch("app.main.routes.db.session.commit")
+    @patch("app.main.models.db.get_or_404")
+    @patch("app.main.models.db.session.commit")
     def test_update_ong_retorna_404_quando_nao_encontra(self, mock_commit, mock_get, client):
         mock_get.side_effect = NotFound()
 
@@ -610,7 +647,7 @@ class TestUpdateApis:
         assert payload["error"]["details"] is None
         mock_commit.assert_not_called()
 
-    @patch("app.main.routes.db.session.commit")
+    @patch("app.main.models.db.session.commit")
     def test_update_ong_payload_invalido_retorna_400(self, mock_commit, client):
         r = client.put(
             f"/api/ongs/{uuid.uuid4()}",
@@ -626,8 +663,8 @@ class TestUpdateApis:
         assert payload["error"]["details"] is None
         mock_commit.assert_not_called()
 
-    @patch("app.main.routes.db.get_or_404")
-    @patch("app.main.routes.db.session.commit")
+    @patch("app.main.models.db.get_or_404")
+    @patch("app.main.models.db.session.commit")
     def test_update_user_atualiza_sessao(self, mock_commit, mock_get, client):
         user = _mock_usuario(id=uuid.uuid4(), nome="Ana", email="ana@old.org", tipo="usuario")
         mock_get.return_value = user
@@ -650,9 +687,9 @@ class TestUpdateApis:
             assert sess["user_nome"] == "Ana Nova"
         mock_commit.assert_called_once()
 
-    @patch("app.main.routes.generate_password_hash")
-    @patch("app.main.routes.db.get_or_404")
-    @patch("app.main.routes.db.session.commit")
+    @patch("app.main.controllers.user_controller.generate_password_hash")
+    @patch("app.main.models.db.get_or_404")
+    @patch("app.main.models.db.session.commit")
     def test_update_user_com_senha_rehash(self, mock_commit, mock_get, mock_hash, client):
         user = _mock_usuario(id=uuid.uuid4(), nome="Lia", email="lia@old.org", senha_hash="hash-antigo")
         mock_get.return_value = user
@@ -669,8 +706,8 @@ class TestUpdateApis:
         mock_hash.assert_called_once_with("nova-senha")
         mock_commit.assert_called_once()
 
-    @patch("app.main.routes.db.get_or_404")
-    @patch("app.main.routes.db.session.commit")
+    @patch("app.main.models.db.get_or_404")
+    @patch("app.main.models.db.session.commit")
     def test_update_user_retorna_404_quando_nao_encontra(self, mock_commit, mock_get, client):
         mock_get.side_effect = NotFound()
 
@@ -687,7 +724,7 @@ class TestUpdateApis:
         assert payload["error"]["details"] is None
         mock_commit.assert_not_called()
 
-    @patch("app.main.routes.db.session.commit")
+    @patch("app.main.models.db.session.commit")
     def test_update_user_payload_invalido_retorna_400(self, mock_commit, client):
         r = client.put(
             f"/api/users/{uuid.uuid4()}",
@@ -711,39 +748,39 @@ class TestRotaInexistente:
 
 class TestInteresseRoutes:
 
-    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    @patch("app.main.repositories.InteresseVoluntariadoRepository")
     def test_demonstrar_interesse_deslogado(self, mock_repo, client):
         r = client.post(f"/ong/{uuid.uuid4()}/interesse", data={"mensagem": "Quero ajudar"}, follow_redirects=True)
         assert "/auth/login" in r.request.path
         assert "Você precisa estar logado" in r.get_data(as_text=True)
 
-    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    @patch("app.main.repositories.InteresseVoluntariadoRepository")
     def test_demonstrar_interesse_como_organizador(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
             sess["tipo"] = "organizador"
 
         ong_id = uuid.uuid4()
-        with patch("app.main.routes.db.get_or_404") as mock_get:
+        with patch("app.main.models.db.get_or_404") as mock_get:
             mock_get.return_value = MagicMock(spec=Ong)
             r = client.post(f"/ong/{ong_id}/interesse", data={"mensagem": "Quero ajudar"}, follow_redirects=True)
             assert f"/ong/{ong_id}" in r.request.path
             assert "Organizadores não podem se voluntariar" in r.get_data(as_text=True)
 
-    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    @patch("app.main.repositories.InteresseVoluntariadoRepository")
     def test_demonstrar_interesse_mensagem_vazia(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
             sess["tipo"] = "voluntario"
 
         ong_id = uuid.uuid4()
-        with patch("app.main.routes.db.get_or_404") as mock_get:
+        with patch("app.main.models.db.get_or_404") as mock_get:
             mock_get.return_value = MagicMock(spec=Ong)
             r = client.post(f"/ong/{ong_id}/interesse", data={"mensagem": ""}, follow_redirects=True)
             assert f"/ong/{ong_id}" in r.request.path
             assert "A mensagem de interesse não pode estar vazia" in r.get_data(as_text=True)
 
-    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    @patch("app.main.controllers.interesse_controller.InteresseVoluntariadoRepository")
     def test_demonstrar_interesse_sucesso(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
@@ -751,7 +788,7 @@ class TestInteresseRoutes:
 
         mock_instance = mock_repo.return_value
         ong_id = uuid.uuid4()
-        with patch("app.main.routes.db.get_or_404") as mock_get:
+        with patch("app.main.models.db.get_or_404") as mock_get:
             mock_get.return_value = MagicMock(spec=Ong)
             r = client.post(f"/ong/{ong_id}/interesse", data={"mensagem": "Quero ajudar"}, follow_redirects=True)
             assert f"/ong/{ong_id}" in r.request.path
@@ -763,7 +800,7 @@ class TestInteresseRoutes:
         assert r.status_code == 302
         assert "/auth/login" in r.location
 
-    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    @patch("app.main.controllers.interesse_controller.InteresseVoluntariadoRepository")
     def test_meus_interesses_sucesso(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
@@ -787,8 +824,8 @@ class TestInteresseRoutes:
         r = client.get(f"/ong/{uuid.uuid4()}/interesses")
         assert r.status_code == 403
 
-    @patch("app.main.routes.db.get_or_404")
-    @patch("app.main.routes.InteresseVoluntariadoRepository")
+    @patch("app.main.models.db.get_or_404")
+    @patch("app.main.controllers.interesse_controller.InteresseVoluntariadoRepository")
     def test_interesses_recebidos_como_organizador(self, mock_repo, mock_get, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())

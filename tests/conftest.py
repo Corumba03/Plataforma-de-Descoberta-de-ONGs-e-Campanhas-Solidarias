@@ -8,7 +8,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from app import create_app
-from app.models import db as _db
+from app.main.models import db as _db
 
 
 @pytest.fixture()
