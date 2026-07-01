@@ -87,21 +87,7 @@ def search_campanhas():
     except Exception:
         return _api_error("erro interno ao buscar campanhas", "internal_error", 500)
 
-    return jsonify([
-        {
-            "id": str(c.id),
-            "titulo": c.titulo,
-            "descricao": c.descricao,
-            "status": c.status,
-            "data_inicio": c.data_inicio.isoformat() if c.data_inicio else None,
-            "data_fim": c.data_fim.isoformat() if c.data_fim else None,
-            "ong": {
-                "id": str(c.ong.id),
-                "nome": c.ong.nome
-            }
-        }
-        for c in campanhas
-    ])
+    return jsonify([c.to_dict(include_ong=True) for c in campanhas])
 
 
 @main_bp.get("/ong/<uuid:ong_id>")
@@ -121,39 +107,7 @@ def search_ongs():
     except Exception:
         return _api_error("erro interno ao buscar ongs", "internal_error", 500)
 
-    return jsonify([
-        {
-            "id": str(ong.id),
-            "nome": ong.nome,
-            "descricao": ong.descricao,
-            "cnpj": ong.cnpj,
-            "area_atuacao": ong.area_atuacao.nome_area if ong.area_atuacao else None,
-            "contatos": [
-                {
-                    "tipo": contato.tipo_contato,
-                    "valor": contato.valor
-                } for contato in ong.contatos
-            ],
-            "campanhas": [
-                {
-                    "titulo": campanha.titulo,
-                    "status": campanha.status,
-                    "data_inicio": campanha.data_inicio.isoformat() if campanha.data_inicio else None,
-                    "data_fim": campanha.data_fim.isoformat() if campanha.data_fim else None,
-                    "descricao": campanha.descricao
-                } for campanha in ong.campanhas
-            ],
-            "noticias": [
-                {
-                    "titulo": noticia.titulo,
-                    "data_publicacao": noticia.data_publicacao.isoformat() if noticia.data_publicacao else None,
-                    "link": noticia.link
-                } for noticia in ong.noticias
-            ]
-
-        }
-        for ong in ongs
-    ])
+    return jsonify([ong.to_dict() for ong in ongs])
 
 ###########################
 # Rotas de autenticação
