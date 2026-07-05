@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas ONGs | Plataforma Solidária{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 2rem;">
+
+  <h2>Minhas ONGs</h2>
+  <p>Estas são as ONGs que você gerencia.</p>
+
+  {% if ongs %}
+  <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.5rem;">
+    {% for ong in ongs %}
+    <div
+      style="background-color: var(--panel); border: 1px solid #ece6db; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ece6db; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+
+        <div>
+          <h3 style="margin: 0; color: var(--ink);">{{ ong.nome }}</h3>
+
+          {% if ong.descricao %}
+          <p style="margin: 0.3rem 0 0; color: #666; font-size: 0.9rem;">
+            {{ ong.descricao[:120] }}{% if ong.descricao|length > 120 %}...{% endif %}
+          </p>
+          {% endif %}
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+          <a href="{{ url_for('main.ong_profile', ong_id=ong.id) }}"
+            style="color: var(--accent); text-decoration: none;">
+            Ver perfil
+          </a>
+
+          <a href="{{ url_for('main.interesses_recebidos', ong_id=ong.id) }}"
+            style="color: var(--accent); text-decoration: none;">
+            Ver interesses
+          </a>
+
+          <a href="/edit/ong/{{ ong.id }}" style="color: var(--accent); text-decoration: none;">
+            Editar ONG
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div
+    style="background-color: var(--panel); border: 1px solid #ece6db; border-radius: 8px; padding: 2rem; text-align: center; margin-top: 1.5rem;">
+    <p style="margin: 0; color: #666;">Você ainda não cadastrou nenhuma ONG.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

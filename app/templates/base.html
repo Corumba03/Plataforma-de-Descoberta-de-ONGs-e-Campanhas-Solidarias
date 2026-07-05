@@ -1,47 +1,71 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Plataforma Solidária{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
-    {% block extra_css %}{% endblock %}
-  </head>
-  <body>
-    <header class="site-header-global">
-      <nav class="navbar" id="navbar">
-        <a href="/home" class="navbar_brand">Plataforma<span>Solidária</span></a>
-        <ul class="navbar_links">
-          <li><a href="/ongs">ONGs</a></li>
-          <li><a href="/campaigns">Campanhas</a></li>
-        </ul>
-      </nav>
-    </header>
 
-    {% block page_header %}
-    <div class="site-header">
-      <h1>Plataforma de Descoberta de ONGs</h1>
-      <p>Conectando pessoas a causas que transformam comunidades.</p>
-    </div>
-    {% endblock %}
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Plataforma Solidária{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  {% block extra_css %}{% endblock %}
+</head>
 
-    <main class="{% block main_class %}container{% endblock %}">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="flashes" style="margin-top: 1rem;">
-            {% for category, message in messages %}
-              <div class="flash-{{ category }}" style="padding: 10px; border-radius: 4px; margin-bottom: 10px; font-weight: bold; background-color: {% if category == 'success' %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if category == 'success' %}#155724{% else %}#721c24{% endif %};">
-                {{ message }}
-              </div>
-            {% endfor %}
-          </div>
+<body>
+  <header class="site-header-global">
+    <nav class="navbar" id="navbar">
+      <a href="/home" class="navbar_brand">Plataforma<span>Solidária</span></a>
+      <ul class="navbar_links">
+        <li><a href="/ongs">ONGs</a></li>
+        <li><a href="/campaigns">Campanhas</a></li>
+      </ul>
+      <ul class="navbar_links">
+        {% if session.user_id %}
+
+        {% if session.tipo == "organizador" %}
+        <li><a href="/edit/user"> Gerenciar Perfil</a></li>
+        <li><a href="/my-ongs"> Gerenciar ONGs</a></li>
+        {% else %}
+        <li><a href="/edit/user">Gerenciar Perfil</a></li>
+        <li><a href="/meus-interesses">Meus Interesses</a></li>
         {% endif %}
-      {% endwith %}
-      {% block content %}{% endblock %}
-    </main>
+        <form action="/auth/logout" method="POST" style="display:inline;">
+          <button type="submit" class="link-button">Sair</button>
+        </form>
 
-    <footer class="footer">
-      <p>&copy; 2026 <a href="/home">Plataforma Solidária</a> — Conectando pessoas a causas que transformam.</p>
-    </footer>
-  </body>
+        {% else %}
+        <li><a href="/auth/login">Login</a></li>
+        <li><a href="/auth/register">Registrar</a></li>
+        {% endif %}
+      </ul>
+
+    </nav>
+  </header>
+
+  {% block page_header %}
+  <div class="site-header">
+    <h1>Plataforma de Descoberta de ONGs</h1>
+    <p>Conectando pessoas a causas que transformam comunidades.</p>
+  </div>
+  {% endblock %}
+
+  <main class="{% block main_class %}container{% endblock %}">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flashes" style="margin-top: 1rem;">
+      {% for category, message in messages %}
+      <div class="flash-{{ category }}"
+        style="padding: 10px; border-radius: 4px; margin-bottom: 10px; font-weight: bold; background-color: {% if category == 'success' %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if category == 'success' %}#155724{% else %}#721c24{% endif %};">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 <a href="/home">Plataforma Solidária</a> — Conectando pessoas a causas que transformam.</p>
+  </footer>
+</body>
+
 </html>

@@ -2,55 +2,89 @@
 
 {% block title %}Editar ONG{% endblock %}
 
+{% block extra_css %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}" />
+{% endblock %}
+
 {% block content %}
 
 <h2>Editar ONG</h2>
 
-<form id="editOngForm">
-    <input type="text" name="nome" placeholder="Nome" value="{{ ong.nome }}" required>
+<form id="editOngForm"
+    style="display:flex; flex-direction:column; gap:15px; align-items:center; max-width:400px; margin:0 auto;">
 
-```
-<input type="text" name="cnpj" placeholder="CNPJ" value="{{ ong.cnpj }}" required>
+    ```
+    <div style="width:100%;">
+        <label>Nome</label>
+        <input type="text" name="nome" value="{{ ong.nome }}" required
+            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;">
+    </div>
 
-<textarea name="descricao" placeholder="Descrição" required>{{ ong.descricao }}</textarea>
+    <div style="width:100%;">
+        <label>CNPJ</label>
+        <input type="text" name="cnpj" value="{{ ong.cnpj }}" required
+            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;">
+    </div>
 
-<button type="submit">Salvar alterações</button>
-```
+    <div style="width:100%;">
+        <label>Descrição</label>
+        <textarea name="descricao" required rows="4"
+            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;">{{ ong.descricao }}</textarea>
+    </div>
+
+    <div style="width:100%;"> <label>Área de atuação</label>
+        <select name="area_id" required
+            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px; color: black">
+
+            <option value="">Selecione uma área</option>
+
+            {% for area in areas %}
+            <option value="{{ area.id }}" {% if ong.id_area_atuacao|string==area.id|string %}selected{% endif %}>
+                {{ area.nome_area }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn_primary" style="width:200px; margin-top:20px;">
+            Salvar alterações
+        </button>
+        ```
 
 </form>
 
 <script>
-document.getElementById("editOngForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
+    document.getElementById("editOngForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
 
-    const formData = new FormData(this);
+        const formData = new FormData(this);
 
-    const data = {
-        nome: formData.get("nome"),
-        cnpj: formData.get("cnpj"),
-        descricao: formData.get("descricao")
-    };
+        const data = {
+            nome: formData.get("nome"),
+            cnpj: formData.get("cnpj"),
+            descricao: formData.get("descricao")
+        };
 
-    try {
-        const response = await fetch("/api/ongs/{{ ong.id }}", {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        });
+        try {
+            const response = await fetch("/api/ongs/{{ ong.id }}", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
 
-        if (response.ok) {
-            alert("ONG atualizada com sucesso!");
-            window.location.href = "/";
-        } else {
-            const erro = await response.json();
-            alert(erro.message || "Erro ao atualizar ONG");
+            if (response.ok) {
+                alert("ONG atualizada com sucesso!");
+                window.location.href = "/my-ongs";
+            } else {
+                const erro = await response.json();
+                alert(erro.message || "Erro ao atualizar ONG");
+            }
+        } catch (err) {
+            alert("Erro na requisição");
         }
-    } catch (err) {
-        alert("Erro na requisição");
-    }
-});
+    });
 </script>
 
 {% endblock %}

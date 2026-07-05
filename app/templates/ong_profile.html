@@ -36,17 +36,21 @@
 
       <h3>Ações</h3>
       {% if session.get('user_id') %}
-        {% if session.get('tipo') == 'organizador' %}
+        {% if session.get('tipo') == 'organizador' and session.get('user_id') == ong.dono.id|string %}
           <div class="ong-actions" style="margin-top: 1rem;">
             <a href="{{ url_for('main.interesses_recebidos', ong_id=ong.id) }}" class="btn-primary">Visualizar Mensagens de Interesse Recebidas</a>
           </div>
-        {% else %}
+        {% elif session.get('tipo') == 'usuario' %}
           <div class="ong-actions" style="margin-top: 1rem;">
             <h4>Demonstrar Interesse em se Voluntariar</h4>
             <form id="interestForm" class="interest-form" method="POST" action="{{ url_for('main.demonstrar_interesse', ong_id=ong.id) }}" style="display: flex; flex-direction: column; gap: 8px;">
               <textarea name="mensagem" id="interestMessage" placeholder="Escreva uma breve mensagem de apresentação..." rows="4" style="padding: 10px; width: 100%;" required></textarea>
               <button type="submit" class="btn-primary" style="align-self: flex-start;">Enviar Interesse</button>
             </form>
+          </div>
+        {% else %}
+          <div class="ong-actions" style="margin-top: 1rem;">
+            <p>Você não tem permissão para demonstrar interesse nesta ONG e não é dono desta ONG.</p>
           </div>
         {% endif %}
       {% else %}

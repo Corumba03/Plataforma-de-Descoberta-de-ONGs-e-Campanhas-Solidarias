@@ -24,12 +24,14 @@ class Ong(db.Model):
     cnpj: Mapped[str] = mapped_column(String(14), unique=True)
     id_area_atuacao: Mapped[uuid.UUID] = mapped_column(ForeignKey('area_atuacao.id'))
     data_cadastro: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=func.current_timestamp())
+    id_dono: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey('usuario.id'))
 
     area_atuacao: Mapped["AreaAtuacao"] = relationship(back_populates="ongs")
-    contatos: Mapped[List["ContatoOng"]] = relationship(back_populates="ong")
-    campanhas: Mapped[List["Campanha"]] = relationship(back_populates="ong")
-    noticias: Mapped[List["Noticia"]] = relationship(back_populates="ong")
-    interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="ong")
+    contatos: Mapped[List["ContatoOng"]] = relationship(back_populates="ong", cascade="all, delete-orphan")
+    campanhas: Mapped[List["Campanha"]] = relationship(back_populates="ong", cascade="all, delete-orphan")
+    noticias: Mapped[List["Noticia"]] = relationship(back_populates="ong", cascade="all, delete-orphan")
+    interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="ong", cascade="all, delete-orphan")
+    dono: Mapped[Optional["Usuario"]] = relationship(back_populates="ongs")
 
 class ContatoOng(db.Model):
     __tablename__ = 'contato_ong'
@@ -74,7 +76,8 @@ class Usuario(db.Model):
     senha_hash: Mapped[str] = mapped_column(String(255))
     tipo: Mapped[str] = mapped_column(String(20), nullable=False)
 
-    interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="usuario")
+    interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="usuario", cascade="all, delete-orphan")
+    ongs: Mapped[List["Ong"]] = relationship(back_populates="dono", cascade="all, delete-orphan")
 
 class InteresseVoluntariado(db.Model):
     __tablename__ = 'interesse_voluntariado'

@@ -14,46 +14,11 @@
 <section class="intro" id="intro">
   <!-- 🔐 Auth actions -->
   <div style="display:flex; align-items:center; justify-content:space-between;">
-
-    <!-- 🔹 ESQUERDA -->
-    <div>
-      {% if session.user_id %}
-
-      {% if session.tipo == "organizador" %}
-      <a href="/edit/user">
-        <button class="btn btn_outline">Gerenciar Perfil</button>
-      </a>
-      <a href="/edit/ong/">
-        <button class="btn btn_outline">Gerenciar ONG</button>
-      </a>
-      {% else %}
-      <a href="/edit/user">
-        <button class="btn btn_outline">Gerenciar Perfil</button>
-      </a>
-      {% endif %}
-
-      {% endif %}
-    </div>
-
-    <!-- 🔹 DIREITA -->
-    <div style="display:flex; align-items:center; justify-content:flex-end;">
-      {% if session.user_id %}
+     {% if session.user_id %}
       <span style="margin-right:10px; font-weight:bold; font-size:1.1em;">
         👋 Olá, {{ session.user_nome }}
       </span>
-
-      <form action="/auth/logout" method="POST" style="display:inline;">
-        <button class="btn btn_outline">Sair</button>
-      </form>
-      {% else %}
-      <a href="/auth/login">
-        <button class="btn btn_outline" style="margin-right:10px;">Login</button>
-      </a>
-      <a href="/auth/register">
-        <button class="btn btn_primary">Registrar</button>
-      </a>
       {% endif %}
-    </div>
 
   </div>
   <span class="intro_badge">Plataforma de Impacto Social</span>

@@ -1,8 +1,9 @@
 """Popula o banco de dados com dados iniciais para desenvolvimento."""
 
 from app import create_app
-from app.models import db, AreaAtuacao, Ong, ContatoOng, Campanha, Noticia
+from app.models import db, AreaAtuacao, Ong, ContatoOng, Campanha, Noticia, Usuario
 from datetime import date, datetime
+from werkzeug.security import generate_password_hash
 
 
 def seed():
@@ -10,6 +11,13 @@ def seed():
 
     with app.app_context():
         db.create_all()
+
+        # Cria Usuários donos de ONGs
+        dono1 = Usuario(nome="Dono1", email="dono1@dono.com", senha_hash=generate_password_hash("dono1"), tipo="organizador")
+        dono2 = Usuario(nome="Dono2", email="dono2@dono.com", senha_hash=generate_password_hash("dono2"), tipo="organizador")
+        dono3 = Usuario(nome="Dono3", email="dono3@dono.com", senha_hash=generate_password_hash("dono3"), tipo="organizador")
+        explorador = Usuario(nome="Teste", email="teste@teste.com", senha_hash=generate_password_hash("teste"), tipo="usuario")
+        db.session.add_all([dono1, dono2, dono3, explorador])
 
         # Limpa dados existentes (ordem importa por causa das FKs)
         Noticia.query.delete()
@@ -40,6 +48,7 @@ def seed():
             ),
             cnpj="12345678000199",
             id_area_atuacao=educacao.id,
+            dono=dono1
         )
 
         ong2 = Ong(
@@ -51,6 +60,7 @@ def seed():
             ),
             cnpj="98765432000188",
             id_area_atuacao=saude.id,
+            dono=dono2
         )
 
         ong3 = Ong(
@@ -62,6 +72,7 @@ def seed():
             ),
             cnpj="11223344000155",
             id_area_atuacao=meio_ambiente.id,
+            dono=dono3
         )
 
         db.session.add_all([ong1, ong2, ong3])

@@ -280,12 +280,26 @@ def edit_ong_page(ong_id):
 
     ong = db.get_or_404(Ong, ong_id)
 
-    # 🔒 regra básica de autorização (ajuste conforme seu modelo)
-    # Exemplo: só organizador pode editar
-    if session.get("tipo") != "organizador":
+    # 🔒 autorização (somente dono organizador)
+    if session.get("tipo") != "organizador" or str(ong.id_dono) != session.get("user_id"):
         return "Acesso negado", 403
 
-    return render_template("edit_ong.html", ong=ong)
+    # 📦 dados auxiliares
+    areas = AreaAtuacao.query.all()
+
+    # 📦 relacionamentos (se não estiver usando lazy='joined')
+    campanhas = ong.campanhas
+    noticias = ong.noticias
+    contatos = ong.contatos
+
+    return render_template(
+        "edit_ong.html",
+        ong=ong,
+        areas=areas,
+        campanhas=campanhas,
+        noticias=noticias,
+        contatos=contatos
+    )
 
 
 @main_bp.post("/ong/<uuid:ong_id>/interesse")
@@ -333,7 +347,33 @@ def interesses_recebidos(ong_id):
         return "Acesso negado", 403
 
     ong = db.get_or_404(Ong, ong_id)
+
+    if str(ong.dono.id) != session["user_id"]:
+        return "Acesso negado", 403
+    
     repo = InteresseVoluntariadoRepository()
     interesses = repo.get_by_ong(ong_id)
 
     return render_template("interesses_recebidos.html", interesses=interesses, ong=ong)
+
+@main_bp.get("/my-ongs")
+def my_ongs():
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    user_id = UUID(session["user_id"])
+    if session.get("tipo") != "organizador":
+        return "Acesso negado", 403
+    
+    ongs = Ong.query.filter_by(id_dono=user_id).all()
+
+    return render_template("my_ongs.html", ongs=ongs)
+
+@main_bp.get("/api/allusers")
+def get_all_users():
+    users = Usuario.query.all()
+    return jsonify([{
+        "id": str(user.id),
+        "nome": user.nome,
+        "email": user.email
+    } for user in users])
