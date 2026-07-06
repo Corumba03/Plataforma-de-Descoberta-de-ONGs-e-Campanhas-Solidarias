@@ -10,7 +10,11 @@ import jwt
 
 SECRET_KEY = "super-secret"
 
-def generate_token(user):
+def generate_token(user: Usuario):
+    if not isinstance(user, Usuario):
+        # TODO: Tratar o caso em que o usuário não é uma instância de Usuario
+        raise AttributeError("O parâmetro 'user' deve ser uma instância de Usuario")
+    # TODO: Validar o token (incluindo claim "exp") no fluxo de autenticação em runtime.
     return jwt.encode({
         "user_id": str(user.id),
         "tipo": user.tipo,
