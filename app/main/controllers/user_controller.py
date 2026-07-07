@@ -1,11 +1,12 @@
-from flask import request, jsonify, session, render_template
+from flask import request, jsonify, session, render_template, redirect, url_for
 from uuid import UUID
 from werkzeug.security import generate_password_hash
 
 from app.main.controllers import main_bp
 from app.main.controllers.auth_controller import login_required
+from app.main.controllers.auth_controller import organizador_required
 from app.main.controllers.ong_controller import _get_validated_entity
-from app.main.models import db, Usuario
+from app.main.models import db, Usuario, Ong
 
 @main_bp.put("/api/users/<uuid:user_id>")
 def update_user(user_id):
@@ -35,3 +36,21 @@ def edit_user_page():
     user = db.get_or_404(Usuario, user_id)
 
     return render_template("edit_user.html", user=user)
+
+@main_bp.get("/my-ongs")
+@login_required
+@organizador_required
+def my_ongs():
+    user_id = UUID(session["user_id"])
+    ongs = Ong.query.filter_by(id_dono=user_id).all()
+
+    return render_template("my_ongs.html", ongs=ongs)
+
+@main_bp.get("/api/allusers")
+def get_all_users():
+    users = Usuario.query.all()
+    return jsonify([{
+        "id": str(user.id),
+        "nome": user.nome,
+        "email": user.email
+    } for user in users])

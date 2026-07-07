@@ -36,7 +36,7 @@
 
       <h3>Ações</h3>
       {% if session.get('user_id') %}
-        {% if session.get('tipo') == 'organizador' and session.get('user_id') == ong.dono.id|string %}
+        {% if session.get('tipo') == 'organizador' and session.get('user_id') == ong.id_dono|string %}
           <div class="ong-actions" style="margin-top: 1rem;">
             <a href="{{ url_for('main.interesses_recebidos', ong_id=ong.id) }}" class="btn-primary">Visualizar Mensagens de Interesse Recebidas</a>
           </div>

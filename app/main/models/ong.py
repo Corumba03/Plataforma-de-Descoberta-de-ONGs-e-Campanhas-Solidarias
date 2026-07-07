@@ -16,12 +16,14 @@ class Ong(db.Model):
     cnpj: Mapped[str] = mapped_column(String(14), unique=True)
     id_area_atuacao: Mapped[uuid.UUID] = mapped_column(ForeignKey('area_atuacao.id'))
     data_cadastro: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=func.current_timestamp())
+    id_dono: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey('usuario.id'))
 
     area_atuacao: Mapped["AreaAtuacao"] = relationship(back_populates="ongs")
     contatos: Mapped[List["ContatoOng"]] = relationship(back_populates="ong")
     campanhas: Mapped[List["Campanha"]] = relationship(back_populates="ong")
     noticias: Mapped[List["Noticia"]] = relationship(back_populates="ong")
     interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="ong")
+    dono: Mapped[Optional["Usuario"]] = relationship(back_populates="ongs")
 
     def to_dict(self) -> dict:
         """Serializa a ONG para representação JSON, incluindo relacionamentos."""

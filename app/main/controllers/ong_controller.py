@@ -5,7 +5,7 @@ from werkzeug.exceptions import NotFound
 
 from app.main.controllers import main_bp
 from app.main.controllers.auth_controller import login_required, organizador_required
-from app.main.models import db, Ong
+from app.main.models import db, Ong, AreaAtuacao
 
 def _api_error(message, code, status, details=None):
     return jsonify({"error": {"code": code, "message": message, "details": details}}), status
@@ -64,4 +64,19 @@ def update_ong(ong_id):
 @organizador_required
 def edit_ong_page(ong_id):
     ong = db.get_or_404(Ong, ong_id)
-    return render_template("edit_ong.html", ong=ong)
+    # 📦 dados auxiliares
+    areas = AreaAtuacao.query.all()
+
+    # 📦 relacionamentos (se não estiver usando lazy='joined')
+    campanhas = ong.campanhas
+    noticias = ong.noticias
+    contatos = ong.contatos
+
+    return render_template(
+        "edit_ong.html",
+        ong=ong,
+        areas=areas,
+        campanhas=campanhas,
+        noticias=noticias,
+        contatos=contatos
+    )

@@ -15,3 +15,4 @@ class Usuario(db.Model):
     tipo: Mapped[str] = mapped_column(String(20), nullable=False)
 
     interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="usuario")
+    ongs: Mapped[List["Ong"]] = relationship(back_populates="dono")
