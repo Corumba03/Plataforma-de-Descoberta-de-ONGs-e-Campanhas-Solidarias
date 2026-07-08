@@ -2,58 +2,233 @@
 
 {% block title %}Minhas ONGs | Plataforma Solidária{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}" />
+{% endblock %}
+
 {% block content %}
 <div class="container" style="margin-top: 2rem;">
 
-  <h2>Minhas ONGs</h2>
-  <p>Estas são as ONGs que você gerencia.</p>
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h2>Minhas ONGs teste</h2>
+      <p>Estas são as ONGs que você gerencia.</p>
+    </div>
+
+    <button onclick="abrirModal()" style="
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 0.7rem 1.2rem;
+        border-radius: 6px;
+        cursor: pointer;
+      ">
+      + Nova ONG
+    </button>
+  </div>
+
 
   {% if ongs %}
   <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.5rem;">
     {% for ong in ongs %}
-    <div
-      style="background-color: var(--panel); border: 1px solid #ece6db; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+    <div style="background-color: var(--panel); border: 1px solid #ece6db; border-radius: 8px; padding: 1.5rem;">
 
-      <div
-        style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ece6db; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+      <h3>{{ ong.nome }}</h3>
 
-        <div>
-          <h3 style="margin: 0; color: var(--ink);">{{ ong.nome }}</h3>
+      {% if ong.descricao %}
+      <p>{{ ong.descricao }}</p>
+      {% endif %}
 
-          {% if ong.descricao %}
-          <p style="margin: 0.3rem 0 0; color: #666; font-size: 0.9rem;">
-            {{ ong.descricao[:120] }}{% if ong.descricao|length > 120 %}...{% endif %}
-          </p>
-          {% endif %}
-        </div>
+      <a href="{{ url_for('main.ong_profile', ong_id=ong.id) }}">
+        Ver perfil
+      </a>
 
-        <div style="display: flex; gap: 1rem;">
-          <a href="{{ url_for('main.ong_profile', ong_id=ong.id) }}"
-            style="color: var(--accent); text-decoration: none;">
-            Ver perfil
-          </a>
-
-          <a href="{{ url_for('main.interesses_recebidos', ong_id=ong.id) }}"
-            style="color: var(--accent); text-decoration: none;">
-            Ver interesses
-          </a>
-
-          <a href="/edit/ong/{{ ong.id }}" style="color: var(--accent); text-decoration: none;">
-            Editar ONG
-          </a>
-        </div>
-
-      </div>
+      <button onclick="deletarOng('{{ ong.id }}')" style="
+      background:none;
+      border:none;
+      color:#d11a2a;
+      cursor:pointer;
+      font-weight:bold;
+    ">
+        Excluir ONG
+      </button>
 
     </div>
     {% endfor %}
   </div>
+
   {% else %}
-  <div
-    style="background-color: var(--panel); border: 1px solid #ece6db; border-radius: 8px; padding: 2rem; text-align: center; margin-top: 1.5rem;">
-    <p style="margin: 0; color: #666;">Você ainda não cadastrou nenhuma ONG.</p>
-  </div>
+  <p>Você ainda não cadastrou nenhuma ONG.</p>
   {% endif %}
 
 </div>
+
+
+<!-- MODAL -->
+<div id="modalOng" style="
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.4);
+        align-items:center;
+        justify-content:center;
+        z-index:1000;
+    ">
+
+  <div style="
+            background:white;
+            border-radius:10px;
+            padding:2rem;
+            width:400px;
+        ">
+
+    <h2>Criar ONG</h2>
+
+    <form id="createOngForm" style="
+                display:flex;
+                flex-direction:column;
+                gap:15px;
+            ">
+
+      <div>
+        <label class="label">Nome</label>
+        <input name="nome" required
+          style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;">
+      </div>
+
+      <div>
+        <label>CNPJ</label>
+        <input name="cnpj" required
+          style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;">
+      </div>
+
+      <div>
+        <label>Descrição</label>
+        <textarea name="descricao" rows="4"
+          style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;"></textarea>
+      </div>
+
+      <!-- ⚠️ IMPORTANTE: agora é SELECT -->
+      <div>
+        <label>Área de atuação</label>
+        <select name="id_area_atuacao" required
+          style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;">
+
+          <!-- idealmente vem do backend -->
+          <option value="">Selecione</option>
+          {% for area in areas %}
+          <option value="{{ area.id }}">{{ area.nome_area }}</option>
+          {% endfor %}
+
+        </select>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+
+        <button class="btn btn_primary" type="button" onclick="fecharModal()">
+          Cancelar
+        </button>
+
+        <button class="btn btn_primary" type="submit">
+          Criar ONG
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<script>
+  function abrirModal() {
+    document.getElementById("modalOng").style.display = "flex";
+  }
+
+  function fecharModal() {
+    document.getElementById("modalOng").style.display = "none";
+  }
+
+  async function deletarOng(ongId) {
+
+    const confirmacao = confirm("Tem certeza que deseja excluir esta ONG? Essa ação não pode ser desfeita.");
+
+    if (!confirmacao) return;
+
+    try {
+
+      const response = await fetch(`/api/ong/${ongId}`, {
+        method: "DELETE"
+      });
+
+      if (response.ok) {
+
+        alert("ONG excluída com sucesso!");
+        window.location.reload();
+
+      } else {
+
+        const erro = await response.json();
+        alert(erro.message || "Erro ao excluir ONG");
+
+      }
+
+    } catch (err) {
+
+      alert("Erro na requisição");
+
+    }
+  }
+
+
+  document
+    .getElementById("createOngForm")
+    .addEventListener("submit", async function (e) {
+
+      e.preventDefault();
+
+      const formData = new FormData(this);
+
+      const data = {
+        nome: formData.get("nome"),
+        cnpj: formData.get("cnpj"),
+        descricao: formData.get("descricao"),
+        id_area_atuacao: formData.get("id_area_atuacao")
+      };
+
+      try {
+
+        const response = await fetch("/api/ong", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+
+          alert("ONG criada com sucesso!");
+
+          fecharModal();
+          window.location.reload();
+
+        } else {
+
+          const erro = await response.json();
+          alert(erro.message || "Erro ao criar ONG");
+
+        }
+
+      } catch (err) {
+
+        alert("Erro na requisição");
+
+      }
+
+    });
+</script>
+
 {% endblock %}

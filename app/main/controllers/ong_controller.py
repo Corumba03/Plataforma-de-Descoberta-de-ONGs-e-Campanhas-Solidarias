@@ -1,4 +1,6 @@
-from flask import request, render_template, jsonify
+import uuid
+
+from flask import request, render_template, jsonify, session
 from uuid import UUID
 
 from werkzeug.exceptions import NotFound
@@ -80,3 +82,57 @@ def edit_ong_page(ong_id):
         noticias=noticias,
         contatos=contatos
     )
+
+@main_bp.post("/api/ong")
+@login_required
+@organizador_required
+def create_ong():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return _api_error("payload JSON inválido", "invalid_payload", 400)
+    
+    current_user_id = session.get("user_id")
+
+    try:
+        nova_ong = Ong(
+            nome=data.get("nome"),
+            descricao=data.get("descricao"),
+            cnpj=data.get("cnpj"),
+            id_area_atuacao=uuid.UUID(data.get("id_area_atuacao")),
+            id_dono=uuid.UUID(current_user_id)
+        )
+        db.session.add(nova_ong)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return _api_error(f"erro interno ao criar ONG: {str(e)}", "internal_error", 500)
+
+    return jsonify({"message": "ONG criada com sucesso", "id": str(nova_ong.id)}), 201
+
+
+@main_bp.delete("/api/ong/<uuid:ong_id>")
+@login_required
+@organizador_required
+def delete_ong(ong_id):
+    ong = Ong.query.get(ong_id)
+
+    if not ong:
+        return _api_error("ONG não encontrada", "not_found", 404)
+
+    current_user_id = session.get("user_id")
+
+    if str(ong.id_dono) != str(current_user_id):
+        return _api_error("sem permissão para deletar esta ONG", "forbidden", 403)
+
+    try:
+        db.session.delete(ong)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return _api_error(
+            f"erro interno ao deletar ONG: {str(e)}",
+            "internal_error",
+            500
+        )
+
+    return jsonify({"message": "ONG deletada com sucesso"}), 200

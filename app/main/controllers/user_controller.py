@@ -7,6 +7,7 @@ from app.main.controllers.auth_controller import login_required
 from app.main.controllers.auth_controller import organizador_required
 from app.main.controllers.ong_controller import _get_validated_entity
 from app.main.models import db, Usuario, Ong
+from app.main.models.area_atuacao import AreaAtuacao
 
 @main_bp.put("/api/users/<uuid:user_id>")
 def update_user(user_id):
@@ -44,7 +45,9 @@ def my_ongs():
     user_id = UUID(session["user_id"])
     ongs = Ong.query.filter_by(id_dono=user_id).all()
 
-    return render_template("my_ongs.html", ongs=ongs)
+    areas = AreaAtuacao.query.all()
+
+    return render_template("my_ongs.html", ongs=ongs, areas=areas)
 
 @main_bp.get("/api/allusers")
 def get_all_users():

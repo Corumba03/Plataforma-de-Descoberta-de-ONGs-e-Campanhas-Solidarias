@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional, List
 
 from app.main.models import db
+from app.main.models.campanha import Campanha
 
 
 class Ong(db.Model):
@@ -19,10 +20,10 @@ class Ong(db.Model):
     id_dono: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey('usuario.id'))
 
     area_atuacao: Mapped["AreaAtuacao"] = relationship(back_populates="ongs")
-    contatos: Mapped[List["ContatoOng"]] = relationship(back_populates="ong")
-    campanhas: Mapped[List["Campanha"]] = relationship(back_populates="ong")
-    noticias: Mapped[List["Noticia"]] = relationship(back_populates="ong")
-    interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="ong")
+    contatos: Mapped[List["ContatoOng"]] = relationship(back_populates="ong", cascade="all, delete-orphan")
+    campanhas: Mapped[List["Campanha"]] = relationship(back_populates="ong", cascade="all, delete-orphan")
+    noticias: Mapped[List["Noticia"]] = relationship(back_populates="ong", cascade="all, delete-orphan")
+    interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="ong", cascade="all, delete-orphan")
     dono: Mapped[Optional["Usuario"]] = relationship(back_populates="ongs")
 
     def to_dict(self) -> dict:
@@ -35,5 +36,7 @@ class Ong(db.Model):
             "area_atuacao": self.area_atuacao.nome_area if self.area_atuacao else None,
             "contatos": [contato.to_dict() for contato in self.contatos],
             "campanhas": [campanha.to_dict() for campanha in self.campanhas],
-            "noticias": [noticia.to_dict() for noticia in self.noticias]
+            "noticias": [noticia.to_dict() for noticia in self.noticias],
+            "interesses": [interesse.to_dict() for interesse in self.interesses],
+            "dono": self.dono.to_dict() if self.dono else None,
         }
