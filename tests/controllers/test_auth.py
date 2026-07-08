@@ -178,3 +178,52 @@ def test_register_success(client, db, nome, email, senha, tipo, expected_status)
             assert sess.get("user_nome") == nome
             assert sess.get("tipo") == tipo
 
+'''Testes para a função login
+1) Testa se a função retorna erro quando as credenciais são inválidas
+2) Testa se a função cria a sessão corretamente quando as credenciais são válidas'''
+
+@pytest.mark.parametrize(
+    "email, senha, user_exists, password_ok, expected_status",
+    [
+        ("invalid@example.com", "wrongpassword", False, False, 200),
+        ("valid@example.com", "correctpassword", True, True, 302),
+        ("", "password", False, False, 200),
+        ("valid@example.com", "", True, False, 200),
+        ("", "", False, False, 200),
+        ("valid@example", "wrongpassword", True, False, 200),
+
+    ]
+)
+
+def test_login(client, email, senha, user_exists, password_ok, expected_status):
+    with patch("app.main.controllers.auth_controller.Usuario.query") as mock_query, \
+         patch("app.main.controllers.auth_controller.check_password_hash") as mock_check_hash:
+        user = None
+        if user_exists:
+            user = Usuario(
+                id=1,
+                nome="Usuário Válido",
+                email="valid@example.com",
+                senha_hash="hash",
+                tipo=UserType.VOLUNTARIO.value,
+            )
+
+        mock_query.filter_by.return_value.first.return_value = user
+        mock_check_hash.return_value = password_ok
+
+        response = client.post("/auth/login", data={
+            "email": email,
+            "senha": senha
+        })
+
+    assert response.status_code == expected_status
+    if expected_status == 302:
+        assert response.location.endswith("/home")
+        with client.session_transaction() as sess:
+            assert sess.get("user_id") is not None
+            assert sess.get("user_nome") == "Usuário Válido"
+            assert sess.get("tipo") == UserType.VOLUNTARIO.value
+    else:
+        page = response.data.decode()
+        assert "Entrar" in page
+        assert "action=\"/auth/login\"" in page
