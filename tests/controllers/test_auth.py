@@ -99,3 +99,31 @@ def test_login_required_decorator_allow():
 
         assert response == "ok"
 
+'''Testes para a função organizador_required
+1) Testa se a função nega acesso quando o usuário não é organizador
+2) Testa se a função permite o acesso quando o usuário é organizador'''
+
+@organizador_required
+def organizer_only_view():
+    return "ok"
+
+
+def test_organizador_required_decorator_deny():
+    with app.test_request_context("/rota-organizador"):
+        session["tipo"] = UserType.PARTICIPANTE.value
+
+        response, status_code = organizer_only_view()
+
+        assert response == "Acesso negado"
+        assert status_code == 403
+
+
+def test_organizador_required_decorator_allow():
+    with app.test_request_context("/rota-organizador"):
+        session["tipo"] = UserType.ORGANIZADOR.value
+
+        response = organizer_only_view()
+
+        assert response == "ok"
+
+
