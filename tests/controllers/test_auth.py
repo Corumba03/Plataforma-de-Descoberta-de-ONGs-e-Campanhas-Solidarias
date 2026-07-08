@@ -4,9 +4,14 @@ from unittest.mock import patch
 
 import jwt
 import pytest
+from flask import session
 
-from app.main.controllers.auth_controller import SECRET_KEY, generate_token
-from app.main.models import Usuario
+from app.main.controllers.auth_controller import SECRET_KEY, generate_token, login_required, organizador_required
+from app.main.models import Usuario, UserType
+
+from app import create_app
+app = create_app()
+app.config.update(SECRET_KEY="test-secret-key")
 
 ''' Testes para a função generate_token 
 1) Testa se a função retorna um token válido para um usuário válido
@@ -15,7 +20,7 @@ from app.main.models import Usuario
 4) Testa se o token não pode ser decodificado com uma chave incorreta'''
 
 def test_generate_token_valid_input():
-    user = Usuario(id=1, tipo="organizador")
+    user = Usuario(id=1, tipo=UserType.ORGANIZADOR.value)
 
     token = generate_token(user)
 
@@ -23,7 +28,7 @@ def test_generate_token_valid_input():
 
 
 def test_generate_token_invalid_input():
-    invalid_user = [1, "organizador"]
+    invalid_user = [1, UserType.ORGANIZADOR.value]
 
     with pytest.raises(AttributeError):
         generate_token(invalid_user)
@@ -31,16 +36,16 @@ def test_generate_token_invalid_input():
 @pytest.mark.parametrize(
     "user_id,user_tipo",
     [
-        (1, "organizador"),
-        (2, "participante"),
-        (3, "voluntario"),
-        (99, "admin"),
+        (1, UserType.ORGANIZADOR.value),
+        (2, UserType.PARTICIPANTE.value),
+        (3, UserType.VOLUNTARIO.value),
+        (99, UserType.ADMIN.value),
     ],
     ids=[
-        "organizador",
-        "participante",
-        "voluntario",
-        "admin",
+        UserType.ORGANIZADOR.value,
+        UserType.PARTICIPANTE.value,
+        UserType.VOLUNTARIO.value,
+        UserType.ADMIN.value,
     ],
 )
 
@@ -57,7 +62,7 @@ def test_generate_token_valid_token(user_id, user_tipo):
     assert "exp" in decoded_token  # Verifica se a chave de expiração está presente
 
 def test_generate_token_invalid_token():
-    user = Usuario(id=1, tipo="organizador")
+    user = Usuario(id=1, tipo=UserType.ORGANIZADOR.value)
 
     token = generate_token(user)
 
@@ -67,4 +72,30 @@ def test_generate_token_invalid_token():
 
 # TODO adicionar teste para verificar tratamento da expiração do token
 
+'''Testes para a função login_required
+1) Testa se a função redireciona para login quando o usuário não está autenticado
+2) Testa se a função permite o acesso quando o usuário está autenticado'''
+
+@login_required
+def protected_view():
+    return "ok"
+
+def test_login_required_decorator_deny():
+    # Usuário não autenticado deve ser redirecionado para login.
+    with app.test_request_context("/rota-protegida"):
+        response = protected_view()
+
+        assert response.status_code == 302
+        assert response.location.endswith("/auth/login")
+        assert session.get("_flashes") == [("danger", "Você precisa estar logado")]
+    
+
+def test_login_required_decorator_allow():
+    # Usuário autenticado deve acessar a view normalmente.
+    with app.test_request_context("/rota-protegida"):
+        session["user_id"] = "1"
+
+        response = protected_view()
+
+        assert response == "ok"
 
