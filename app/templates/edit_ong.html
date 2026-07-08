@@ -53,6 +53,432 @@
 
 </form>
 
+<h3 style="margin-top:40px;">Campanhas</h3>
+
+<div style="
+  background: var(--panel);
+  border: 1px solid #ece6db;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+">
+
+    <!-- HEADER -->
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>Campanhas cadastradas</strong>
+
+        <button onclick="abrirModalCampanha()" type="button" class="btn btn_primary">
+            + Nova campanha
+        </button>
+    </div>
+
+    <!-- LISTA -->
+    <div id="listaCampanhas" style="margin-top:1rem; display:flex; flex-direction:column; gap:1rem;">
+
+        {% for campanha in campanhas %}
+        <div id="campanha-{{ campanha.id }}" style="border:1px solid #ddd; padding:1rem; border-radius:6px;">
+
+            <h3>{{ campanha.titulo }}</h3>
+
+            <p><strong>Status:</strong> {{ campanha.status }}</p>
+
+            <p><strong>Início:</strong> {{ campanha.data_inicio }}</p>
+            <p><strong>Fim:</strong> {{ campanha.data_fim }}</p>
+
+            <p>{{ campanha.descricao }}</p>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn_primary" type="button" onclick='abrirModalCampanha({
+                        id: "{{ campanha.id }}",
+                        titulo: "{{ campanha.titulo }}",
+                        descricao: "{{ campanha.descricao }}",
+                        status: "{{ campanha.status }}",
+                        data_inicio: "{{ campanha.data_inicio }}",
+                        data_fim: "{{ campanha.data_fim }}"
+                    })'>Editar</button>
+
+                <button class="btn btn_primary" onclick="deletarCampanha('{{ campanha.id }}')"
+                    style="background:red; cursor:pointer;" type="button">
+                    Excluir
+                </button>
+            </div>
+
+        </div>
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<div id="modalCampanha" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+  ">
+    <div style="background:white; padding:2rem; border-radius:10px; width:400px;">
+
+        <h3 id="tituloModalCampanha">Nova campanha</h3>
+
+        <form id="formCampanha" style="margin-top:20px; display:flex; flex-direction:column; gap:15px;">
+
+            <input type="hidden" id="campanhaId">
+
+            <div>
+                <label>Título</label>
+                <input id="titulo" name="titulo" placeholder="Título" required
+                    style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;">
+            </div>
+
+            <div>
+                <label>Descrição</label>
+                <textarea id="descricao" name="descricao" placeholder="Descrição" rows="4"
+                    style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;"></textarea>
+            </div>
+
+            <div>
+                <label>Data de início</label>
+                <input id="data_inicio" type="date" name="data_inicio"
+                    style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;">
+            </div>
+
+            <div>
+                <label>Data de fim</label>
+                <input id="data_fim" type="date" name="data_fim"
+                    style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;">
+            </div>
+
+            <div>
+                <label>Status</label>
+                <select id="status" name="status"
+                    style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px; color:black;">
+                    <option value="ativa">Ativa</option>
+                    <option value="pausada">Pausada</option>
+                    <option value="finalizada">Finalizada</option>
+                </select>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+
+                <button type="button" onclick="fecharModalCampanha()" class="btn btn_primary">
+                    Cancelar
+                </button>
+
+                <button type="submit" class="btn btn_primary">
+                    Salvar campanha
+                </button>
+
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<h3 style="margin-top:40px;">Contatos</h3>
+
+<div style="
+  background: var(--panel);
+  border: 1px solid #ece6db;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top:1rem;
+">
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>Contatos cadastrados</strong>
+
+        <button onclick="abrirModalContato()" type="button" class="btn btn_primary">
+            + Novo contato
+        </button>
+    </div>
+
+
+    <div style="margin-top:1rem; display:flex; flex-direction:column; gap:1rem;">
+
+        {% for contato in contatos %}
+
+        <div id="contato-{{ contato.id }}" style="border:1px solid #ddd; padding:1rem; border-radius:6px;">
+
+            <h3>{{ contato.tipo_contato }}</h3>
+
+            <p>
+                <strong>Valor:</strong>
+                {{ contato.valor }}
+            </p>
+
+
+            <div style="display:flex; gap:10px;">
+
+                <button class="btn btn_primary" type="button" onclick='abrirModalContato({
+                        id: "{{ contato.id }}",
+                        tipo_contato: "{{ contato.tipo_contato }}",
+                        valor: "{{ contato.valor }}"
+                    })'>
+                    Editar
+                </button>
+
+
+                <button class="btn btn_primary" type="button" onclick="deletarContato('{{ contato.id }}')"
+                    style="background:red;">
+                    Excluir
+                </button>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<div id="modalContato" style="
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.5);
+align-items:center;
+justify-content:center;
+z-index:1000;
+">
+
+    <div style="
+background:white;
+padding:2rem;
+border-radius:10px;
+width:400px;
+">
+
+
+        <h3 id="tituloModalContato">
+            Novo contato
+        </h3>
+
+
+        <form id="formContato" style="
+margin-top:20px;
+display:flex;
+flex-direction:column;
+gap:15px;
+">
+
+
+            <input type="hidden" id="contatoId">
+
+
+            <div>
+                <label>Tipo de contato</label>
+
+                <input id="tipo_contato" name="tipo_contato" required
+                    style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+
+            </div>
+
+
+            <div>
+                <label>Valor</label>
+
+                <input id="valor" name="valor" required
+                    style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+
+            </div>
+
+
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+
+                <button type="button" onclick="fecharModalContato()" class="btn btn_primary">
+                    Cancelar
+                </button>
+
+
+                <button type="submit" class="btn btn_primary">
+                    Salvar
+                </button>
+
+            </div>
+
+
+        </form>
+
+    </div>
+
+</div>
+
+<h3 style="margin-top:40px;">Notícias</h3>
+
+<div style="
+  background: var(--panel);
+  border: 1px solid #ece6db;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top:1rem;
+">
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>Notícias cadastradas</strong>
+
+        <button onclick="abrirModalNoticia()" type="button" class="btn btn_primary">
+            + Nova notícia
+        </button>
+    </div>
+
+
+    <div style="
+        margin-top:1rem;
+        display:flex;
+        flex-direction:column;
+        gap:1rem;
+    ">
+
+        {% for noticia in noticias %}
+
+        <div id="noticia-{{ noticia.id }}" style="
+                border:1px solid #ddd;
+                padding:1rem;
+                border-radius:6px;
+            ">
+
+            <h3>{{ noticia.titulo }}</h3>
+
+
+            {% if noticia.data_publicacao %}
+            <p>
+                <strong>Publicada em:</strong>
+                {{ noticia.data_publicacao }}
+            </p>
+            {% endif %}
+
+
+            {% if noticia.link %}
+            <p>
+                <strong>Link:</strong>
+                <a href="{{ noticia.link }}" target="_blank">
+                    {{ noticia.link }}
+                </a>
+            </p>
+            {% endif %}
+
+
+            <div style="display:flex; gap:10px;">
+
+                <button class="btn btn_primary" type="button" onclick='abrirModalNoticia({
+                        id: "{{ noticia.id }}",
+                        titulo: "{{ noticia.titulo }}",
+                        link: "{{ noticia.link }}"
+                    })'>
+                    Editar
+                </button>
+
+
+                <button class="btn btn_primary" type="button" onclick="deletarNoticia('{{ noticia.id }}')"
+                    style="background:red;">
+                    Excluir
+                </button>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<div id="modalNoticia" style="
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.5);
+align-items:center;
+justify-content:center;
+z-index:1000;
+">
+
+    <div style="
+background:white;
+padding:2rem;
+border-radius:10px;
+width:400px;
+">
+
+
+        <h3 id="tituloModalNoticia">
+            Nova notícia
+        </h3>
+
+
+        <form id="formNoticia" style="
+margin-top:20px;
+display:flex;
+flex-direction:column;
+gap:15px;
+">
+
+
+            <input type="hidden" id="noticiaId">
+
+
+            <div>
+
+                <label>Título</label>
+
+                <input id="tituloNoticia" name="titulo" required style="
+width:100%;
+padding:10px;
+border:1px solid #ccc;
+border-radius:6px;
+">
+
+            </div>
+
+
+
+            <div>
+
+                <label>Link</label>
+
+                <input id="linkNoticia" name="link" placeholder="https://..." style="
+width:100%;
+padding:10px;
+border:1px solid #ccc;
+border-radius:6px;
+">
+
+            </div>
+
+
+
+            <div style="
+display:flex;
+justify-content:flex-end;
+gap:10px;
+">
+
+                <button type="button" onclick="fecharModalNoticia()" class="btn btn_primary">
+                    Cancelar
+                </button>
+
+
+                <button type="submit" class="btn btn_primary">
+                    Salvar
+                </button>
+
+            </div>
+
+
+        </form>
+
+    </div>
+
+</div>
+
+
 <script>
     document.getElementById("editOngForm").addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -85,6 +511,401 @@
             alert("Erro na requisição");
         }
     });
+
+    function formatDate(date) {
+        if (!date) return "";
+        return date.split("T")[0].split(" ")[0];
+    }
+
+    function abrirModalCampanha(campanha = null) {
+        console.log("abrirModalCampanha", campanha);
+        const modal = document.getElementById("modalCampanha");
+
+        modal.style.display = "flex";
+
+        // sempre limpa primeiro
+        document.getElementById("formCampanha").reset();
+
+        if (campanha) {
+            // 🔥 MODO EDIÇÃO
+            document.getElementById("campanhaId").value = campanha.id || "";
+
+            document.getElementById("titulo").value = campanha.titulo || "";
+            document.getElementById("descricao").value = campanha.descricao || "";
+            document.getElementById("status").value = campanha.status || "ativa";
+
+            document.getElementById("data_inicio").value = formatDate(campanha.data_inicio);
+            document.getElementById("data_fim").value = formatDate(campanha.data_fim);
+
+            document.getElementById("tituloModalCampanha").innerText = "Editar campanha";
+
+        } else {
+            // 🆕 MODO CRIAÇÃO
+            document.getElementById("campanhaId").value = "";
+            document.getElementById("tituloModalCampanha").innerText = "Nova campanha";
+        }
+    }
+
+    function fecharModalCampanha() {
+        document.getElementById("modalCampanha").style.display = "none";
+    }
+
+    document.getElementById("modalCampanha").addEventListener("click", function (e) {
+        if (e.target === this) {
+            fecharModalCampanha();
+        }
+    });
+
+
+    // ✅ CRIAR / EDITAR
+    document.getElementById("formCampanha").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const id = document.getElementById("campanhaId").value;
+
+        const data = {
+            titulo: this.titulo.value,
+            descricao: this.descricao.value,
+            data_inicio: this.data_inicio.value || null,
+            data_fim: this.data_fim.value || null,
+            status: this.status.value,
+            id_ong: "{{ ong.id }}"
+        };
+
+        const url = id ? `/api/campaigns/${id}` : `/api/campaigns`;
+        const method = id ? "PUT" : "POST";
+
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            fecharModalCampanha();
+            alert("Campanha salva com sucesso");
+            window.location.reload();
+        } else {
+            const erro = await response.json();
+            alert(erro.message || "Erro ao salvar campanha");
+        }
+    });
+
+
+    // 🗑️ DELETAR
+    async function deletarCampanha(id) {
+
+        if (!confirm("Tem certeza que deseja excluir esta campanha?")) return;
+
+        const response = await fetch(`/api/campaigns/${id}`, {
+            method: "DELETE"
+        });
+
+        if (response.ok) {
+            alert("Campanha excluída com sucesso");
+            window.location.reload();
+        } else {
+            const erro = await response.json();
+            alert(erro.message || "Erro ao excluir campanha");
+        }
+    }
+
+
+    function abrirModalContato(contato = null) {
+
+        const modal = document.getElementById("modalContato");
+
+        modal.style.display = "flex";
+
+        document.getElementById("formContato").reset();
+
+
+        if (contato) {
+
+            document.getElementById("contatoId").value = contato.id;
+
+            document.getElementById("tipo_contato").value =
+                contato.tipo_contato || "";
+
+            document.getElementById("valor").value =
+                contato.valor || "";
+
+
+            document.getElementById("tituloModalContato").innerText =
+                "Editar contato";
+
+
+        } else {
+
+            document.getElementById("contatoId").value = "";
+
+            document.getElementById("tituloModalContato").innerText =
+                "Novo contato";
+        }
+
+    }
+
+
+    function fecharModalContato() {
+
+        document.getElementById("modalContato").style.display = "none";
+
+    }
+
+
+    document.getElementById("modalContato")
+        .addEventListener("click", function (e) {
+
+            if (e.target === this) {
+                fecharModalContato();
+            }
+
+        });
+
+    document.getElementById("formContato")
+        .addEventListener("submit", async function (e) {
+
+            e.preventDefault();
+
+
+            const id = document.getElementById("contatoId").value;
+
+
+            const data = {
+
+                tipo_contato: this.tipo_contato.value,
+
+                valor: this.valor.value,
+
+                id_ong: "{{ ong.id }}"
+            };
+
+
+            const url = id
+                ? `/api/contacts/${id}`
+                : `/api/contacts`;
+
+
+            const method = id
+                ? "PUT"
+                : "POST";
+
+
+            const response = await fetch(url, {
+                method,
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(data)
+            });
+
+
+
+            if (response.ok) {
+
+                fecharModalContato();
+
+                alert("Contato salvo com sucesso");
+
+                window.location.reload();
+
+            } else {
+
+                const erro = await response.json();
+
+                alert(erro.message || "Erro ao salvar contato");
+            }
+
+        });
+
+    async function deletarContato(id) {
+
+        if (!confirm("Tem certeza que deseja excluir este contato?"))
+            return;
+
+
+        const response = await fetch(`/api/contacts/${id}`, {
+            method: "DELETE"
+        });
+
+
+        if (response.ok) {
+
+            alert("Contato excluído com sucesso");
+
+            window.location.reload();
+
+        } else {
+
+            const erro = await response.json();
+
+            alert(erro.message || "Erro ao excluir contato");
+        }
+
+    }
+
+    function abrirModalNoticia(noticia = null) {
+
+        const modal = document.getElementById("modalNoticia");
+
+        modal.style.display = "flex";
+
+
+        document.getElementById("formNoticia").reset();
+
+
+        if (noticia) {
+
+            document.getElementById("noticiaId").value = noticia.id;
+
+
+            document.getElementById("tituloNoticia").value =
+                noticia.titulo || "";
+
+
+            document.getElementById("linkNoticia").value =
+                noticia.link || "";
+
+
+            document.getElementById("tituloModalNoticia").innerText =
+                "Editar notícia";
+
+
+        } else {
+
+
+            document.getElementById("noticiaId").value = "";
+
+
+            document.getElementById("tituloModalNoticia").innerText =
+                "Nova notícia";
+
+        }
+
+    }
+
+
+
+    function fecharModalNoticia() {
+
+        document.getElementById("modalNoticia").style.display = "none";
+
+    }
+
+
+
+    document.getElementById("modalNoticia")
+        .addEventListener("click", function (e) {
+
+            if (e.target === this) {
+
+                fecharModalNoticia();
+
+            }
+
+        });
+
+    document.getElementById("formNoticia")
+        .addEventListener("submit", async function (e) {
+
+            e.preventDefault();
+
+
+            const id = document.getElementById("noticiaId").value;
+
+
+            const data = {
+
+                titulo: this.titulo.value,
+
+                link: this.link.value || null,
+
+                id_ong: "{{ ong.id }}"
+
+            };
+
+
+            const url = id
+                ? `/api/news/${id}`
+                : `/api/news`;
+
+
+            const method = id
+                ? "PUT"
+                : "POST";
+
+
+
+            const response = await fetch(url, {
+
+                method,
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(data)
+
+            });
+
+
+
+            if (response.ok) {
+
+                fecharModalNoticia();
+
+                alert("Notícia salva com sucesso");
+
+                window.location.reload();
+
+
+            } else {
+
+                const erro = await response.json();
+
+                alert(erro.message || "Erro ao salvar notícia");
+
+            }
+
+
+        });
+
+    async function deletarNoticia(id) {
+
+
+        if (!confirm("Tem certeza que deseja excluir esta notícia?"))
+            return;
+
+
+
+        const response = await fetch(`/api/news/${id}`, {
+
+            method: "DELETE"
+
+        });
+
+
+
+        if (response.ok) {
+
+            alert("Notícia excluída com sucesso");
+
+            window.location.reload();
+
+
+        } else {
+
+            const erro = await response.json();
+
+            alert(erro.message || "Erro ao excluir notícia");
+
+        }
+
+    }
 </script>
 
 {% endblock %}

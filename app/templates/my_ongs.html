@@ -43,6 +43,14 @@
         Ver perfil
       </a>
 
+      <a href="{{ url_for('main.edit_ong_page', ong_id=ong.id) }}" style="margin-left: 1.5rem;">
+        Editar ONG
+      </a>
+
+      <a href="{{ url_for('main.interesses_recebidos', ong_id=ong.id) }}"  style="margin-left: 1.5rem;">
+        Interesses recebidos
+      </a>
+
       <button onclick="deletarOng('{{ ong.id }}')" style="
       background:none;
       border:none;
