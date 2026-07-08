@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.main import main_bp
 from app.models import db, Ong, Campanha, AreaAtuacao, Usuario, InteresseVoluntariado
+from app.main.models import UserType
 from app.repositories import InteresseVoluntariadoRepository
 from tests.test_models import ong
 from werkzeug.exceptions import NotFound
@@ -281,7 +282,7 @@ def edit_ong_page(ong_id):
     ong = db.get_or_404(Ong, ong_id)
 
     # 🔒 autorização (somente dono organizador)
-    if session.get("tipo") != "organizador" or str(ong.id_dono) != session.get("user_id"):
+    if session.get("tipo") != UserType.ORGANIZADOR.value or str(ong.id_dono) != session.get("user_id"):
         return "Acesso negado", 403
 
     # 📦 dados auxiliares
@@ -308,7 +309,7 @@ def demonstrar_interesse(ong_id):
         flash("Você precisa estar logado para demonstrar interesse.", "danger")
         return redirect(url_for("main.login"))
     
-    if session.get("tipo") == "organizador":
+    if session.get("tipo") == UserType.ORGANIZADOR.value:
         flash("Organizadores não podem se voluntariar.", "danger")
         return redirect(url_for("main.ong_profile", ong_id=ong_id))
 
@@ -343,7 +344,7 @@ def interesses_recebidos(ong_id):
     if "user_id" not in session:
         return redirect(url_for("main.login"))
 
-    if session.get("tipo") != "organizador":
+    if session.get("tipo") != UserType.ORGANIZADOR.value:
         return "Acesso negado", 403
 
     ong = db.get_or_404(Ong, ong_id)
@@ -362,7 +363,7 @@ def my_ongs():
         return redirect(url_for("main.login"))
 
     user_id = UUID(session["user_id"])
-    if session.get("tipo") != "organizador":
+    if session.get("tipo") != UserType.ORGANIZADOR.value:
         return "Acesso negado", 403
     
     ongs = Ong.query.filter_by(id_dono=user_id).all()
