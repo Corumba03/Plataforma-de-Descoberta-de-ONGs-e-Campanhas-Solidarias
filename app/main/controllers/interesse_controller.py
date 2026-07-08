@@ -3,7 +3,7 @@ from uuid import UUID
 
 from app.main.controllers import main_bp
 from app.main.controllers.auth_controller import login_required, organizador_required
-from app.main.models import db, Ong
+from app.main.models import db, Ong, UserType
 from app.main.repositories.interesse_repository import InteresseVoluntariadoRepository
 
 
@@ -11,7 +11,7 @@ from app.main.repositories.interesse_repository import InteresseVoluntariadoRepo
 @login_required
 def demonstrar_interesse(ong_id):
 
-    if session.get("tipo") == "organizador":
+    if session.get("tipo") == UserType.ORGANIZADOR.value:
         flash("Organizadores não podem se voluntariar.", "danger")
         return redirect(url_for("main.ong_profile", ong_id=ong_id))
 

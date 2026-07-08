@@ -5,6 +5,16 @@ from typing import List
 
 from app.main.models import db
 
+from enum import Enum
+
+
+class UserType(str, Enum):
+    ORGANIZADOR = "organizador"
+    PARTICIPANTE = "participante"
+    VOLUNTARIO = "voluntario"
+    ADMIN = "admin"
+
+
 class Usuario(db.Model):
     __tablename__ = 'usuario'
 

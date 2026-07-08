@@ -4,7 +4,7 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.main.controllers import main_bp
-from app.main.models import db, Usuario
+from app.main.models import db, Usuario, UserType
 
 import jwt
 
@@ -33,7 +33,7 @@ def login_required(f):
 def organizador_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if session.get("tipo") != "organizador":
+        if session.get("tipo") != UserType.ORGANIZADOR.value:
             return "Acesso negado", 403
         return f(*args, **kwargs)
     return decorated
