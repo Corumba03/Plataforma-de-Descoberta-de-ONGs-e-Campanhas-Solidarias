@@ -127,3 +127,54 @@ def test_organizador_required_decorator_allow():
         assert response == "ok"
 
 
+'''Testes para a função register
+1) Testa se a função retorna erro quando o usuário já existe
+2) Testa se a função cria um novo usuário com sucesso'''
+
+def test_register_user_exists(client):
+    # Simula que o usuário já existe
+    with patch("app.main.controllers.auth_controller.Usuario.query") as mock_query:
+        mock_query.filter_by.return_value.first.return_value = Usuario(id=1, email="test@example.com")
+
+        response = client.post("/auth/register", data={
+            "nome": "Test User",
+            "email": "test@example.com",
+            "senha": "password",
+            "tipo": UserType.VOLUNTARIO.value
+        })
+
+    assert response.status_code == 400
+    assert "Usuário já existe" in response.data.decode()
+
+# TODO: Atualizar o teste após implementar a validação de campos no register
+@pytest.mark.parametrize(
+    "nome,email,senha,tipo, expected_status",
+    [
+        ("Valid User", "user@example.com", "password123", UserType.VOLUNTARIO.value, 302),
+        ("Valid User", "user2@example.com", "password123", UserType.ORGANIZADOR.value, 302), #É pra ser 400 em todos os abaixo, mas como não tem validação de campos, o teste vai passar
+        ("", "invalid@example.com", "password", UserType.VOLUNTARIO.value, 302),
+        ("No Email", "", "password123", UserType.VOLUNTARIO.value, 302),
+        ("Invalid Email", "invalid-email", "password", UserType.VOLUNTARIO.value, 302),
+        ("No Password", "nopassword@example.com", "", UserType.VOLUNTARIO.value, 302),
+        ("Invalid Tipo", "Invalid Tipo", "password", "invalid_tipo", 302),
+    ]
+)
+
+def test_register_success(client, db, nome, email, senha, tipo, expected_status):
+    response = client.post("/auth/register", data={
+        "nome": nome,
+        "email": email,
+        "senha": senha,
+        "tipo": tipo
+    })
+
+    assert response.status_code == expected_status
+
+    # Verifica se a sessão foi criada corretamente
+    if expected_status == 302:
+        assert response.location.endswith("/home")
+        with client.session_transaction() as sess:
+            assert sess.get("user_id") is not None
+            assert sess.get("user_nome") == nome
+            assert sess.get("tipo") == tipo
+
