@@ -51,6 +51,8 @@ def register():
         user_existente = Usuario.query.filter_by(email=email).first()
         if user_existente:
             return "Usuário já existe", 400
+        
+        #TODO : Validar os campos de entrada (nome, email, senha, tipo) antes de criar o usuário
 
         user = Usuario(
             nome=nome,
