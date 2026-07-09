@@ -592,10 +592,12 @@ class TestEditPages:
         assert r.status_code == 403
         assert b"Acesso negado" in r.data
 
+    @patch("app.main.controllers.ong_controller.AreaAtuacao")
     @patch("app.main.models.db.get_or_404")
-    def test_edit_ong_organizador_renderiza_pagina(self, mock_get, client):
+    def test_edit_ong_organizador_renderiza_pagina(self, mock_get, mock_area, client):
         ong = _mock_ong(id=uuid.uuid4(), nome="ONG Edit")
         mock_get.return_value = ong
+        mock_area.query.all.return_value = []
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
             sess["tipo"] = "organizador"
