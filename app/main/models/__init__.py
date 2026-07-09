@@ -7,7 +7,7 @@ from .contato_ong import ContatoOng
 from .noticia import Noticia
 from .campanha import Campanha
 from .ong import Ong
-from .usuario import Usuario, UserType
+from .usuario import Usuario
 from .interesse_voluntariado import InteresseVoluntariado
 
 __all__ = [
@@ -18,6 +18,5 @@ __all__ = [
     "Campanha",
     "Ong",
     "Usuario",
-    "UserType",
     "InteresseVoluntariado"
 ]
