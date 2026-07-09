@@ -4,13 +4,17 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.main.controllers import main_bp
-from app.main.models import db, Usuario
+from app.main.models import db, Usuario, UserType
 
 import jwt
 
 SECRET_KEY = "super-secret"
 
-def generate_token(user):
+def generate_token(user: Usuario):
+    if not isinstance(user, Usuario):
+        # TODO: Tratar o caso em que o usuário não é uma instância de Usuario
+        raise AttributeError("O parâmetro 'user' deve ser uma instância de Usuario")
+    # TODO: Validar o token (incluindo claim "exp") no fluxo de autenticação em runtime.
     return jwt.encode({
         "user_id": str(user.id),
         "tipo": user.tipo,
@@ -29,7 +33,7 @@ def login_required(f):
 def organizador_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if session.get("tipo") != "organizador":
+        if session.get("tipo") != UserType.ORGANIZADOR.value:
             return "Acesso negado", 403
         return f(*args, **kwargs)
     return decorated
@@ -47,6 +51,8 @@ def register():
         user_existente = Usuario.query.filter_by(email=email).first()
         if user_existente:
             return "Usuário já existe", 400
+        
+        #TODO : Validar os campos de entrada (nome, email, senha, tipo) antes de criar o usuário
 
         user = Usuario(
             nome=nome,
