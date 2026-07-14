@@ -396,6 +396,38 @@ class TestOngProfile:
         assert "Camp Visível".encode() in r.data
 
     @patch("app.main.models.db.get_or_404")
+    def test_exibe_calendario_com_campanhas_com_datas(self, mock_get, client):
+        ong = _mock_ong(campanhas=[
+            _mock_campanha(
+                titulo="Campanha Agendada",
+                data_inicio=date(2026, 3, 10),
+                data_fim=date(2026, 3, 12),
+            )
+        ])
+        mock_get.return_value = ong
+
+        r = client.get(f"/ong/{ong.id}?month=2026-03")
+        html = r.get_data(as_text=True)
+
+        assert r.status_code == 200
+        assert "Março 2026" in html
+        assert "Campanha Agendada" in html
+        assert html.count("Campanha Agendada") >= 2
+        assert "?month=2026-02" in html
+        assert "?month=2026-04" in html
+
+    @patch("app.main.models.db.get_or_404")
+    def test_sem_campanhas_com_datas_exibe_mensagem(self, mock_get, client):
+        ong = _mock_ong(campanhas=[_mock_campanha(titulo="Campanha Sem Data", data_inicio=None, data_fim=None)])
+        mock_get.return_value = ong
+
+        r = client.get(f"/ong/{ong.id}?month=2026-03")
+        html = r.get_data(as_text=True)
+
+        assert r.status_code == 200
+        assert "Esta ONG não possui campanhas com datas definidas" in html
+
+    @patch("app.main.models.db.get_or_404")
     def test_sem_campanhas(self, mock_get, client):
         mock_get.return_value = _mock_ong(campanhas=[])
         r = client.get(f"/ong/{mock_get.return_value.id}")
