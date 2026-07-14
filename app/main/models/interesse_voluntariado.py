@@ -18,3 +18,12 @@ class InteresseVoluntariado(db.Model):
 
     usuario: Mapped["Usuario"] = relationship(back_populates="interesses")
     ong: Mapped["Ong"] = relationship(back_populates="interesses")
+
+    def to_dict(self):
+        return {
+            "id": str(self.id),
+            "id_usuario": str(self.id_usuario),
+            "id_ong": str(self.id_ong),
+            "mensagem": self.mensagem,
+            "data_envio": self.data_envio.isoformat() if self.data_envio else None
+        }
