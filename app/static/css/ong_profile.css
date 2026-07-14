@@ -121,3 +121,221 @@ ul.ong-meta li, ul.ong-contacts li, .ong-sidebar ul li {
   outline: none;
   border-color: var(--accent, #1d7f5f);
 }
+
+.ong-calendar {
+  margin-top: 2rem;
+  background: #ffffff;
+  border: 1px solid #eae3d8;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 18px rgba(30, 30, 20, 0.05);
+  width: 100%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0ebe2;
+}
+
+.calendar-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #2c2c2c;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.calendar-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  color: var(--accent, #1d7f5f);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(29, 127, 95, 0.08);
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.calendar-control:hover {
+  background: rgba(29, 127, 95, 0.16);
+  transform: translateY(-1px);
+}
+
+.calendar-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+  min-width: 150px;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.calendar-empty-message {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  background: #f9f5f1;
+  border: 1px dashed #e2d4c5;
+  color: #7a6550;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.calendar-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.calendar-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.calendar-row--header div {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: #8a8378;
+  text-align: center;
+  padding: 0.4rem 0;
+}
+
+.calendar-cell {
+  min-height: 108px;
+  background: #fcfbf8;
+  border: 1px solid #eee7db;
+  border-radius: 12px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.calendar-cell--has-events {
+  background: #ffffff;
+  border-color: #e4d9c8;
+}
+
+.calendar-cell--has-events:hover {
+  box-shadow: 0 3px 10px rgba(30, 30, 20, 0.06);
+}
+
+.calendar-cell--today {
+  border: 1.5px solid var(--accent, #1d7f5f);
+  background: #f2faf6;
+}
+
+.calendar-cell--empty {
+  background: transparent;
+  border: none;
+}
+
+.calendar-cell-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.calendar-day-number {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #555;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.calendar-cell--today .calendar-day-number {
+  background: var(--accent, #1d7f5f);
+  color: #fff;
+}
+
+.calendar-cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  overflow-y: auto;
+}
+
+.calendar-campaign-link {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 7px;
+  background: #eef3ff;
+  color: #1f4fa4;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  min-width: 0;
+}
+
+.calendar-campaign-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1f4fa4;
+}
+
+.calendar-campaign-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .calendar-row--header div {
+    font-size: 0.65rem;
+  }
+  .calendar-cell {
+    min-height: 70px;
+    padding: 0.4rem;
+  }
+  .calendar-campaign-title {
+    display: none;
+  }
+  .calendar-campaign-link {
+    justify-content: center;
+    padding: 0.3rem;
+  }
+}
+
+@media (min-width: 500px) {
+  .calendar-campaign-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 499px) {
+  .calendar-campaign-title {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}

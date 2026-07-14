@@ -34,6 +34,63 @@
         {% endfor %}
       </ul>
 
+  <section class="ong-calendar">
+    <div class="calendar-header">
+      <h3>Calendário de Campanhas</h3>
+      <div class="calendar-nav">
+        <a href="{{ url_for('main.ong_profile', ong_id=ong.id, month=calendar.prev_month) }}" class="calendar-control calendar-control--prev">
+          <span aria-hidden="true">&larr;</span> Mês anterior
+        </a>
+        <span class="calendar-title">{{ calendar.month_name }} {{ calendar.year }}</span>
+        <a href="{{ url_for('main.ong_profile', ong_id=ong.id, month=calendar.next_month) }}" class="calendar-control calendar-control--next">
+          Próximo mês <span aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
+    </div>
+
+    {% if not calendar.has_any_campaigns %}
+      <div class="calendar-empty-message">
+        Esta ONG não possui campanhas com datas definidas para exibir no calendário.
+      </div>
+    {% endif %}
+
+    <div class="calendar-grid">
+      <div class="calendar-row calendar-row--header">
+        <div>Seg</div>
+        <div>Ter</div>
+        <div>Qua</div>
+        <div>Qui</div>
+        <div>Sex</div>
+        <div>Sáb</div>
+        <div>Dom</div>
+      </div>
+
+      {% for week in calendar.weeks %}
+      <div class="calendar-row">
+        {% for day in week %}
+          {% if day %}
+          <div class="calendar-cell{% if day.is_today %} calendar-cell--today{% endif %}{% if day.campaigns %} calendar-cell--has-events{% endif %}">
+            <div class="calendar-cell-header">
+              <span class="calendar-day-number">{{ day.date.day }}</span>
+            </div>
+            <div class="calendar-cell-events">
+              {% for campanha in day.campaigns %}
+                <a href="{{ url_for('main.campanha_detail', campanha_id=campanha.id) }}" class="calendar-campaign-link">
+                  <span class="calendar-campaign-dot"></span>
+                  <span class="calendar-campaign-title">{{ campanha.titulo }}</span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+          {% else %}
+          <div class="calendar-cell calendar-cell--empty"></div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
       <h3>Ações</h3>
       {% if session.get('user_id') %}
         {% if session.get('tipo') == 'organizador' and session.get('user_id') == ong.id_dono|string %}
