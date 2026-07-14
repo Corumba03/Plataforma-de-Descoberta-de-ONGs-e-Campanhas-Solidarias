@@ -1,4 +1,6 @@
 import uuid
+import calendar
+import datetime
 
 from flask import request, render_template, jsonify, session
 from uuid import UUID
@@ -22,6 +24,87 @@ def _get_validated_entity(model_class, entity_id, data):
     except NotFound:
         return None, _api_error("recurso não encontrado", "not_found", 404)
 
+_MONTH_NAMES = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+]
+
+
+def _parse_month_query(month_value):
+    if not month_value:
+        today = datetime.date.today()
+        return today.year, today.month
+
+    try:
+        year, month = month_value.split("-")
+        return int(year), int(month)
+    except (ValueError, AttributeError):
+        today = datetime.date.today()
+        return today.year, today.month
+
+
+def _format_month(year, month):
+    return f"{year:04d}-{month:02d}"
+
+
+def _build_ong_calendar(campaigns, year, month):
+    campaigns = sorted(
+        campaigns,
+        key=lambda campanha: (
+            campanha.data_inicio if campanha.data_inicio else datetime.date.max,
+            campanha.titulo,
+        ),
+    )
+
+    first_day = datetime.date(year, month, 1)
+    _, days_in_month = calendar.monthrange(year, month)
+    week_start_offset = first_day.weekday()
+    today = datetime.date.today()
+
+    days = []
+    for day_number in range(1, days_in_month + 1):
+        current_date = datetime.date(year, month, day_number)
+        day_campaigns = [
+            campanha
+            for campanha in campaigns
+            if campanha.data_inicio
+            and campanha.data_fim
+            and campanha.data_inicio <= current_date <= campanha.data_fim
+        ]
+        days.append({
+            "date": current_date,
+            "campaigns": day_campaigns,
+            "is_today": current_date == today,
+        })
+
+    weeks = []
+    week = [None] * week_start_offset
+    for day in days:
+        week.append(day)
+        if len(week) == 7:
+            weeks.append(week)
+            week = []
+
+    if week:
+        week.extend([None] * (7 - len(week)))
+        weeks.append(week)
+
+    prev_month = first_day - datetime.timedelta(days=1)
+    next_month = (first_day + datetime.timedelta(days=days_in_month)).replace(day=1)
+    any_dated_campaigns = any(
+        campanha.data_inicio and campanha.data_fim for campanha in campaigns
+    )
+
+    return {
+        "year": year,
+        "month": month,
+        "month_name": _MONTH_NAMES[month - 1],
+        "prev_month": _format_month(prev_month.year, prev_month.month),
+        "next_month": _format_month(next_month.year, next_month.month),
+        "weeks": weeks,
+        "has_any_campaigns": any_dated_campaigns,
+    }
+
 @main_bp.get("/ongs")
 def search():
     return render_template("search_ongs.html")
@@ -29,7 +112,9 @@ def search():
 @main_bp.get("/ong/<uuid:ong_id>")
 def ong_profile(ong_id):
     ong = db.get_or_404(Ong, ong_id)
-    return render_template("ong_profile.html", ong=ong)
+    year, month = _parse_month_query(request.args.get("month"))
+    calendar_data = _build_ong_calendar(ong.campanhas, year, month)
+    return render_template("ong_profile.html", ong=ong, calendar=calendar_data)
 
 @main_bp.get("/api/ongs")
 def search_ongs():
