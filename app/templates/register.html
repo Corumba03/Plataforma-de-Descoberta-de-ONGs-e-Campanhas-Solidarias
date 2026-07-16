@@ -10,6 +10,10 @@
 
 <h2 style="margin-bottom:20px; text-align:center;">Criar conta</h2>
 
+{% if erro %}
+<p style="margin-bottom:20px; text-align:center; color:#b42318;">{{ erro }}</p>
+{% endif %}
+
 <form method="POST" style="display:flex; flex-direction:column; gap:15px; align-items:center; max-width:400px; margin:0 auto;">
   
   <div>
@@ -17,6 +21,7 @@
     <input 
       type="text" 
       name="nome" 
+      value="{{ form_data.nome if form_data else '' }}"
       required
       style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;"
     >
@@ -27,6 +32,7 @@
     <input 
       type="email" 
       name="email" 
+      value="{{ form_data.email if form_data else '' }}"
       required
       style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;"
     >
@@ -48,8 +54,8 @@
       name="tipo"
       style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-top:5px;"
     >
-      <option value="usuario">Usuário</option>
-      <option value="organizador">Organizador</option>
+      <option value="usuario" {% if form_data and form_data.tipo == 'usuario' %}selected{% endif %}>Usuário</option>
+      <option value="organizador" {% if form_data and form_data.tipo == 'organizador' %}selected{% endif %}>Organizador</option>
     </select>
   </div>
 

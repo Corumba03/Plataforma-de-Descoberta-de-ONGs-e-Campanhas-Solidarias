@@ -1,16 +1,64 @@
 from datetime import datetime, timedelta
+import re
+
 from flask import request, redirect, url_for, session, render_template, flash
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.main.controllers import main_bp
-from app.main.models import db, Usuario
+from app.main.models import db, Usuario, UserType
 
 import jwt
 
 SECRET_KEY = "super-secret"
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+ALLOWED_REGISTER_TYPES = {"usuario", *(user_type.value for user_type in UserType)}
 
-def generate_token(user):
+
+def validate_token(token: str):
+    return jwt.decode(
+        token,
+        SECRET_KEY,
+        algorithms=["HS256"],
+        options={"require": ["exp", "user_id", "tipo"]},
+    )
+
+
+def _get_session_from_token():
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None
+
+    token = auth_header.removeprefix("Bearer ").strip()
+    if not token:
+        return None
+
+    try:
+        payload = validate_token(token)
+    except jwt.PyJWTError:
+        return None
+
+    return payload
+
+
+def _validate_register_form(nome: str | None, email: str | None, senha: str | None, tipo: str | None):
+    nome = (nome or "").strip()
+    email = (email or "").strip()
+    senha = senha or ""
+
+    if not nome:
+        return "Nome é obrigatório"
+    if not email or not EMAIL_RE.match(email):
+        return "Email inválido"
+    if not senha:
+        return "Senha é obrigatória"
+    if tipo not in ALLOWED_REGISTER_TYPES:
+        return "Tipo de conta inválido"
+    return None
+
+def generate_token(user: Usuario):
+    if not isinstance(user, Usuario):
+        raise TypeError("O parâmetro 'user' deve ser uma instância de Usuario")
     return jwt.encode({
         "user_id": str(user.id),
         "tipo": user.tipo,
@@ -21,6 +69,12 @@ def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if "user_id" not in session:
+            token_payload = _get_session_from_token()
+            if token_payload:
+                session["user_id"] = token_payload["user_id"]
+                session["tipo"] = token_payload["tipo"]
+                return f(*args, **kwargs)
+
             flash("Você precisa estar logado", "danger")
             return redirect(url_for("main.login"))
         return f(*args, **kwargs)
@@ -42,15 +96,24 @@ def register():
         email = request.form.get("email")
         senha = request.form.get("senha")
         tipo = request.form.get("tipo")
+        form_data = {
+            "nome": (nome or "").strip(),
+            "email": (email or "").strip(),
+            "tipo": tipo or "usuario",
+        }
 
         # Verifica se já existe usuário
         user_existente = Usuario.query.filter_by(email=email).first()
         if user_existente:
-            return "Usuário já existe", 400
+            return render_template("register.html", erro="Usuário já existe", form_data=form_data), 400
+
+        validation_error = _validate_register_form(nome, email, senha, tipo)
+        if validation_error:
+            return render_template("register.html", erro=validation_error, form_data=form_data), 400
 
         user = Usuario(
-            nome=nome,
-            email=email,
+            nome=form_data["nome"],
+            email=form_data["email"],
             senha_hash=generate_password_hash(senha),
             tipo=tipo
         )

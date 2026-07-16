@@ -199,7 +199,7 @@ def create_ong():
 @login_required
 @organizador_required
 def delete_ong(ong_id):
-    ong = Ong.query.get(ong_id)
+    ong = db.session.get(Ong, ong_id)
 
     if not ong:
         return _api_error("ONG não encontrada", "not_found", 404)

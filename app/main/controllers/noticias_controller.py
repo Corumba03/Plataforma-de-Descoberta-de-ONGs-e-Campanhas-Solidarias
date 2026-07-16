@@ -53,7 +53,7 @@ def update_noticia(new_id):
     if not isinstance(data, dict):
         return _api_error("payload JSON inválido", "invalid_payload", 400)
 
-    noticia = Noticia.query.get(new_id)
+    noticia = db.session.get(Noticia, new_id)
 
     if not noticia:
         return _api_error("Notícia não encontrada", "not_found", 404)
@@ -75,7 +75,7 @@ def update_noticia(new_id):
 @organizador_required
 def delete_noticia(new_id):
 
-    noticia = Noticia.query.get(new_id)
+    noticia = db.session.get(Noticia, new_id)
 
     if not noticia:
         return _api_error("Notícia não encontrada", "not_found", 404)
