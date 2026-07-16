@@ -6,7 +6,7 @@ import jwt
 import pytest
 from flask import session
 
-from app.main.controllers.auth_controller import SECRET_KEY, generate_token, login_required, organizador_required
+from app.main.controllers.auth_controller import SECRET_KEY, generate_token, login_required, organizador_required, validate_token
 from app.main.models import Usuario, UserType
 
 from app import create_app
@@ -30,7 +30,7 @@ def test_generate_token_valid_input():
 def test_generate_token_invalid_input():
     invalid_user = [1, UserType.ORGANIZADOR.value]
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(TypeError):
         generate_token(invalid_user)
 
 @pytest.mark.parametrize(
@@ -70,7 +70,20 @@ def test_generate_token_invalid_token():
     with pytest.raises(jwt.exceptions.InvalidSignatureError):
         jwt.decode(token, "wrong-secret", algorithms=["HS256"])
 
-# TODO adicionar teste para verificar tratamento da expiração do token
+
+def test_validate_token_expirado():
+    expired_token = jwt.encode(
+        {
+            "user_id": "1",
+            "tipo": UserType.ORGANIZADOR.value,
+            "exp": datetime.datetime.utcnow() - datetime.timedelta(seconds=1),
+        },
+        SECRET_KEY,
+        algorithm="HS256",
+    )
+
+    with pytest.raises(jwt.ExpiredSignatureError):
+        validate_token(expired_token)
 
 '''Testes para a função login_required
 1) Testa se a função redireciona para login quando o usuário não está autenticado
@@ -98,6 +111,18 @@ def test_login_required_decorator_allow():
         response = protected_view()
 
         assert response == "ok"
+
+
+def test_login_required_decorator_allow_with_bearer_token():
+    user = Usuario(id=1, tipo=UserType.ORGANIZADOR.value)
+    token = generate_token(user)
+
+    with app.test_request_context("/rota-protegida", headers={"Authorization": f"Bearer {token}"}):
+        response = protected_view()
+
+        assert response == "ok"
+        assert session.get("user_id") == "1"
+        assert session.get("tipo") == UserType.ORGANIZADOR.value
 
 '''Testes para a função organizador_required
 1) Testa se a função nega acesso quando o usuário não é organizador
@@ -146,17 +171,16 @@ def test_register_user_exists(client):
     assert response.status_code == 400
     assert "Usuário já existe" in response.data.decode()
 
-# TODO: Atualizar o teste após implementar a validação de campos no register
 @pytest.mark.parametrize(
     "nome,email,senha,tipo, expected_status",
     [
         ("Valid User", "user@example.com", "password123", UserType.VOLUNTARIO.value, 302),
-        ("Valid User", "user2@example.com", "password123", UserType.ORGANIZADOR.value, 302), #É pra ser 400 em todos os abaixo, mas como não tem validação de campos, o teste vai passar
-        ("", "invalid@example.com", "password", UserType.VOLUNTARIO.value, 302),
-        ("No Email", "", "password123", UserType.VOLUNTARIO.value, 302),
-        ("Invalid Email", "invalid-email", "password", UserType.VOLUNTARIO.value, 302),
-        ("No Password", "nopassword@example.com", "", UserType.VOLUNTARIO.value, 302),
-        ("Invalid Tipo", "Invalid Tipo", "password", "invalid_tipo", 302),
+        ("Valid User", "user2@example.com", "password123", UserType.ORGANIZADOR.value, 302),
+        ("", "invalid@example.com", "password", UserType.VOLUNTARIO.value, 400),
+        ("No Email", "", "password123", UserType.VOLUNTARIO.value, 400),
+        ("Invalid Email", "invalid-email", "password", UserType.VOLUNTARIO.value, 400),
+        ("No Password", "nopassword@example.com", "", UserType.VOLUNTARIO.value, 400),
+        ("Invalid Tipo", "invalidtipo@example.com", "password", "invalid_tipo", 400),
     ]
 )
 
@@ -177,6 +201,10 @@ def test_register_success(client, db, nome, email, senha, tipo, expected_status)
             assert sess.get("user_id") is not None
             assert sess.get("user_nome") == nome
             assert sess.get("tipo") == tipo
+    else:
+        page = response.data.decode()
+        assert "Criar conta" in page
+
 
 '''Testes para a função login
 1) Testa se a função retorna erro quando as credenciais são inválidas
