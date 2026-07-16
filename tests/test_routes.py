@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 from werkzeug.exceptions import NotFound
 from werkzeug.security import check_password_hash
 
-from app.main.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong, Usuario, UserType
+from app.main.models import AreaAtuacao, Campanha, ContatoOng, Noticia, Ong, Usuario
 
 
 def _mock_ong(**kwargs):
@@ -163,7 +163,7 @@ class TestHome:
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
             sess["user_nome"] = "Ana"
-            sess["tipo"] = UserType.ORGANIZADOR.value
+            sess["tipo"] = "organizador"
 
         r = client.get("/home")
 
@@ -396,6 +396,38 @@ class TestOngProfile:
         assert "Camp Visível".encode() in r.data
 
     @patch("app.main.models.db.get_or_404")
+    def test_exibe_calendario_com_campanhas_com_datas(self, mock_get, client):
+        ong = _mock_ong(campanhas=[
+            _mock_campanha(
+                titulo="Campanha Agendada",
+                data_inicio=date(2026, 3, 10),
+                data_fim=date(2026, 3, 12),
+            )
+        ])
+        mock_get.return_value = ong
+
+        r = client.get(f"/ong/{ong.id}?month=2026-03")
+        html = r.get_data(as_text=True)
+
+        assert r.status_code == 200
+        assert "Março 2026" in html
+        assert "Campanha Agendada" in html
+        assert html.count("Campanha Agendada") >= 2
+        assert "?month=2026-02" in html
+        assert "?month=2026-04" in html
+
+    @patch("app.main.models.db.get_or_404")
+    def test_sem_campanhas_com_datas_exibe_mensagem(self, mock_get, client):
+        ong = _mock_ong(campanhas=[_mock_campanha(titulo="Campanha Sem Data", data_inicio=None, data_fim=None)])
+        mock_get.return_value = ong
+
+        r = client.get(f"/ong/{ong.id}?month=2026-03")
+        html = r.get_data(as_text=True)
+
+        assert r.status_code == 200
+        assert "Esta ONG não possui campanhas com datas definidas" in html
+
+    @patch("app.main.models.db.get_or_404")
     def test_sem_campanhas(self, mock_get, client):
         mock_get.return_value = _mock_ong(campanhas=[])
         r = client.get(f"/ong/{mock_get.return_value.id}")
@@ -457,7 +489,7 @@ class TestAuth:
                 "nome": "Nova Pessoa",
                 "email": "nova@teste.org",
                 "senha": "segredo",
-                "tipo": UserType.ORGANIZADOR.value,
+                "tipo": "organizador",
             },
         )
 
@@ -467,7 +499,7 @@ class TestAuth:
         mock_commit.assert_called_once()
         with client.session_transaction() as sess:
             assert "user_id" in sess
-            assert sess["tipo"] == UserType.ORGANIZADOR.value
+            assert sess["tipo"] == "organizador"
 
     def test_register_post_sucesso_persiste_usuario_real(self, client, db):
         email = "persistencia@teste.org"
@@ -498,7 +530,7 @@ class TestAuth:
     @patch("app.main.controllers.auth_controller.check_password_hash")
     @patch("app.main.models.Usuario.query")
     def test_login_post_sucesso_seta_sessao(self, mock_user_query, mock_check_hash, client):
-        user = _mock_usuario(id=uuid.uuid4(), nome="Maria", tipo=UserType.ORGANIZADOR.value)
+        user = _mock_usuario(id=uuid.uuid4(), nome="Maria", tipo="organizador")
         mock_user_query.filter_by.return_value.first.return_value = user
         mock_check_hash.return_value = True
 
@@ -509,7 +541,7 @@ class TestAuth:
         with client.session_transaction() as sess:
             assert sess["user_id"] == str(user.id)
             assert sess["user_nome"] == "Maria"
-            assert sess["tipo"] == UserType.ORGANIZADOR.value
+            assert sess["tipo"] == "organizador"
 
     @patch("app.main.models.Usuario.query")
     def test_login_post_credenciais_invalidas(self, mock_user_query, client):
@@ -592,13 +624,15 @@ class TestEditPages:
         assert r.status_code == 403
         assert b"Acesso negado" in r.data
 
+    @patch("app.main.controllers.ong_controller.AreaAtuacao")
     @patch("app.main.models.db.get_or_404")
-    def test_edit_ong_organizador_renderiza_pagina(self, mock_get, client):
+    def test_edit_ong_organizador_renderiza_pagina(self, mock_get, mock_area, client):
         ong = _mock_ong(id=uuid.uuid4(), nome="ONG Edit")
         mock_get.return_value = ong
+        mock_area.query.all.return_value = []
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
-            sess["tipo"] = UserType.ORGANIZADOR.value
+            sess["tipo"] = "organizador"
 
         r = client.get(f"/edit/ong/{ong.id}")
 
@@ -756,16 +790,13 @@ class TestInteresseRoutes:
 
     @patch("app.main.repositories.InteresseVoluntariadoRepository")
     def test_demonstrar_interesse_como_organizador(self, mock_repo, client):
-        user_id = uuid.uuid4()
         with client.session_transaction() as sess:
-            sess["user_id"] = str(user_id)
-            sess["tipo"] = UserType.ORGANIZADOR.value
+            sess["user_id"] = str(uuid.uuid4())
+            sess["tipo"] = "organizador"
 
         ong_id = uuid.uuid4()
         with patch("app.main.models.db.get_or_404") as mock_get:
-            ong = MagicMock(spec=Ong)
-            ong.dono = MagicMock(id=user_id)
-            mock_get.return_value = ong
+            mock_get.return_value = MagicMock(spec=Ong)
             r = client.post(f"/ong/{ong_id}/interesse", data={"mensagem": "Quero ajudar"}, follow_redirects=True)
             assert f"/ong/{ong_id}" in r.request.path
             assert "Organizadores não podem se voluntariar" in r.get_data(as_text=True)
@@ -774,7 +805,7 @@ class TestInteresseRoutes:
     def test_demonstrar_interesse_mensagem_vazia(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
-            sess["tipo"] = UserType.VOLUNTARIO.value
+            sess["tipo"] = "voluntario"
 
         ong_id = uuid.uuid4()
         with patch("app.main.models.db.get_or_404") as mock_get:
@@ -787,7 +818,7 @@ class TestInteresseRoutes:
     def test_demonstrar_interesse_sucesso(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
-            sess["tipo"] = UserType.VOLUNTARIO.value
+            sess["tipo"] = "voluntario"
 
         mock_instance = mock_repo.return_value
         ong_id = uuid.uuid4()
@@ -807,7 +838,7 @@ class TestInteresseRoutes:
     def test_meus_interesses_sucesso(self, mock_repo, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
-            sess["tipo"] = UserType.VOLUNTARIO.value
+            sess["tipo"] = "voluntario"
 
         mock_instance = mock_repo.return_value
         mock_instance.get_by_usuario.return_value = []
@@ -822,7 +853,7 @@ class TestInteresseRoutes:
     def test_interesses_recebidos_como_voluntario(self, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
-            sess["tipo"] = UserType.VOLUNTARIO.value
+            sess["tipo"] = "voluntario"
 
         r = client.get(f"/ong/{uuid.uuid4()}/interesses")
         assert r.status_code == 403
@@ -832,7 +863,7 @@ class TestInteresseRoutes:
     def test_interesses_recebidos_como_organizador(self, mock_repo, mock_get, client):
         with client.session_transaction() as sess:
             sess["user_id"] = str(uuid.uuid4())
-            sess["tipo"] = UserType.ORGANIZADOR.value
+            sess["tipo"] = "organizador"
 
         ong = MagicMock(spec=Ong)
         ong.id = uuid.uuid4()

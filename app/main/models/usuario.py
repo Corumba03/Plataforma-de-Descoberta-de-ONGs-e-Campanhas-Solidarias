@@ -5,16 +5,6 @@ from typing import List
 
 from app.main.models import db
 
-from enum import Enum
-
-
-class UserType(str, Enum):
-    ORGANIZADOR = "organizador"
-    PARTICIPANTE = "participante"
-    VOLUNTARIO = "voluntario"
-    ADMIN = "admin"
-
-
 class Usuario(db.Model):
     __tablename__ = 'usuario'
 
@@ -26,3 +16,11 @@ class Usuario(db.Model):
 
     interesses: Mapped[List["InteresseVoluntariado"]] = relationship(back_populates="usuario")
     ongs: Mapped[List["Ong"]] = relationship(back_populates="dono")
+
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'nome': self.nome,
+            'email': self.email,
+            'tipo': self.tipo
+        }
