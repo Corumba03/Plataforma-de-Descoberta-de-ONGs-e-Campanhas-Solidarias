@@ -52,7 +52,7 @@ def update_contact(contact_id):
     if not isinstance(data, dict):
         return _api_error("payload JSON inválido", "invalid_payload", 400)
 
-    contato = ContatoOng.query.get(contact_id)
+    contato = db.session.get(ContatoOng, contact_id)
 
     if not contato:
         return _api_error("Contato não encontrado", "not_found", 404)
@@ -74,7 +74,7 @@ def update_contact(contact_id):
 @organizador_required
 def delete_contact(contact_id):
 
-    contato = ContatoOng.query.get(contact_id)
+    contato = db.session.get(ContatoOng, contact_id)
 
     if not contato:
         return _api_error("Contato não encontrado", "not_found", 404)
