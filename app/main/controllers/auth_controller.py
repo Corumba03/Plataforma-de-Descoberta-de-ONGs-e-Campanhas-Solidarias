@@ -6,7 +6,7 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.main.controllers import main_bp
-from app.main.models import db, Usuario
+from app.main.models import db, Usuario, UserType
 
 import jwt
 
@@ -56,13 +56,9 @@ def _validate_register_form(nome: str | None, email: str | None, senha: str | No
         return "Tipo de conta inválido"
     return None
 
-<<<<<<< HEAD
 def generate_token(user: Usuario):
     if not isinstance(user, Usuario):
         raise TypeError("O parâmetro 'user' deve ser uma instância de Usuario")
-=======
-def generate_token(user):
->>>>>>> origin/main
     return jwt.encode({
         "user_id": str(user.id),
         "tipo": user.tipo,
@@ -109,15 +105,11 @@ def register():
         # Verifica se já existe usuário
         user_existente = Usuario.query.filter_by(email=email).first()
         if user_existente:
-<<<<<<< HEAD
             return render_template("register.html", erro="Usuário já existe", form_data=form_data), 400
 
         validation_error = _validate_register_form(nome, email, senha, tipo)
         if validation_error:
             return render_template("register.html", erro=validation_error, form_data=form_data), 400
-=======
-            return "Usuário já existe", 400
->>>>>>> origin/main
 
         user = Usuario(
             nome=form_data["nome"],
